@@ -14,7 +14,8 @@ from src.predictive_maintenance import PredictiveMaintenanceEngine
 from agent.llm_ev_agent import LLMEVDigitalTwinAgent
 from src.monitoring_engine import MonitoringEngine
 from src.drift_detector import DataDriftDetector
-
+from agent.tool_calling_ev_agent import ToolCallingEVAgent
+from agent.mcp_tool_agent import MCPToolAgent
 
 st.set_page_config(
     page_title="EV Digital Twin Platform",
@@ -30,6 +31,8 @@ maintenance_engine = PredictiveMaintenanceEngine()
 ev_agent = LLMEVDigitalTwinAgent()
 monitoring_engine = MonitoringEngine()
 drift_detector = DataDriftDetector()
+tool_calling_agent = ToolCallingEVAgent()
+mcp_tool_agent = MCPToolAgent()
 
 
 st.sidebar.header("Input Parameters")
@@ -452,7 +455,7 @@ with tab5:
     )
 
     if question:
-        answer = ev_agent.ask(
+        answer = tool_calling_agent.ask(
             question=question,
             battery_id=battery_id,
             cycle=cycle,
