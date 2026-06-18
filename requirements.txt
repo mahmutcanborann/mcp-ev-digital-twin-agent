@@ -1,0 +1,10 @@
+cat > requirements.txt << 'EOF'
+streamlit
+pandas
+numpy
+scikit-learn
+joblib
+plotly
+requests
+mcp
+EOF
