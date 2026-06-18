@@ -20,9 +20,7 @@ The project combines machine learning, digital twin concepts, monitoring systems
 
 ![Monitoring](images/monitoring.png)
 
-
-## Features
-
+## 🚗 Key Features
 * Battery State of Health (SOH) Prediction
 * Remaining Useful Life (RUL) Estimation
 * Battery Range Estimation
@@ -37,7 +35,8 @@ The project combines machine learning, digital twin concepts, monitoring systems
 
 ## Architecture
 
-```User
+```text
+User
  │
  ▼
 Streamlit Dashboard
@@ -70,8 +69,8 @@ Used for driving behavior and energy consumption analytics.
 
 ## MCP Tools
 
-* predict_future_soh
-* estimate_rul
+- `predict_future_soh()`
+- `estimate_rul()`
 
 ## Dashboard Modules
 
@@ -87,6 +86,10 @@ Used for driving behavior and energy consumption analytics.
 ## Installation
 
 ```bash
+git clone https://github.com/mahmutcanborann/mcp-ev-digital-twin-agent.git
+
+cd mcp-ev-digital-twin-agent
+
 pip install -r requirements.txt
 ```
 
@@ -103,5 +106,3 @@ streamlit run dashboard/app.py
 * Hugging Face Deployment
 * Advanced Fleet AI Analyst
 
-```
-```
