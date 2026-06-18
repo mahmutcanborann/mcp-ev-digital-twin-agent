@@ -1,6 +1,25 @@
-# MCP-Based EV Digital Twin Agent
+# 🔋 MCP-Based EV Digital Twin Agent
 
-An AI-powered EV Digital Twin platform for battery health analytics, predictive maintenance, fleet monitoring, and intelligent decision support.
+An AI-powered EV Digital Twin platform for battery health monitoring, predictive maintenance, fleet analytics, and intelligent decision support.
+
+The project combines machine learning, digital twin concepts, monitoring systems, and MCP (Model Context Protocol) tools to simulate and analyze electric vehicle battery behavior.
+
+---
+
+## Dashboard Preview
+
+### Battery Digital Twin
+
+![Battery Twin](images/battery_twin.png)
+
+### Fleet Analytics
+
+![Fleet Analytics](images/fleet_analytics.png)
+
+### Monitoring & Drift Detection
+
+![Monitoring](images/monitoring.png)
+
 
 ## Features
 
@@ -18,16 +37,21 @@ An AI-powered EV Digital Twin platform for battery health analytics, predictive 
 
 ## Architecture
 
-```text
-Dashboard
-    ↓
+```User
+ │
+ ▼
+Streamlit Dashboard
+ │
+ ▼
 EV Digital Twin Agent
-    ↓
-Battery Twin Engine
-    ↓
-Monitoring / Drift Detection / Maintenance
-    ↓
-MCP Server Tools
+ │
+ ├── Battery Twin Engine
+ ├── Charging Intelligence
+ ├── Driving Intelligence
+ ├── Predictive Maintenance
+ ├── Fleet Monitoring
+ ├── Drift Detection
+ └── MCP Server Tools
 ```
 
 ## Datasets
