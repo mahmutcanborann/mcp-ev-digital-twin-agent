@@ -1,8 +1,8 @@
-# 🔋 MCP-Based EV Digital Twin Agent
+# 🔋 MCP-Based EV Digital Twin Agent with Gemma-Powered Tool Calling
 
-An AI-powered EV Digital Twin platform for battery health monitoring, predictive maintenance, fleet analytics, and intelligent decision support.
+An AI-powered EV Digital Twin platform that combines battery analytics, predictive maintenance, fleet monitoring, MCP-based tooling, and Gemma-powered intelligent decision support.
 
-The project combines machine learning, digital twin concepts, monitoring systems, and MCP (Model Context Protocol) tools to simulate and analyze electric vehicle battery behavior.
+The system allows users to analyze battery health, estimate remaining useful life (RUL), monitor fleet-wide battery performance, detect data drift, and interact with EV analytics through a natural language interface.
 
 ---
 
@@ -20,68 +20,139 @@ The project combines machine learning, digital twin concepts, monitoring systems
 
 ![Monitoring](images/monitoring.png)
 
+---
+
 ## 🚗 Key Features
-* Battery State of Health (SOH) Prediction
+
+### Battery Digital Twin
+
+* State of Health (SOH) Prediction
 * Remaining Useful Life (RUL) Estimation
 * Battery Range Estimation
-* What-if Scenario Simulation
-* Charging Intelligence & Risk Analysis
-* Driving Intelligence
-* Predictive Maintenance Recommendations
-* Fleet Monitoring Dashboard
-* Data Drift Detection
-* LLM-Based EV Analyst
-* MCP Server Tools
+* Future Degradation Simulation
+* What-if Scenario Analysis
 
-## Architecture
+### Charging Intelligence
+
+* Charging Pattern Analysis
+* Charging Risk Scoring
+* Fast Charging Detection
+* Battery Protection Recommendations
+
+### Driving Intelligence
+
+* Driving Style Analysis
+* Energy Consumption Evaluation
+* Vehicle Efficiency Insights
+
+### Predictive Maintenance
+
+* Maintenance Priority Assessment
+* Maintenance Recommendations
+* Battery Risk Identification
+
+### Fleet Analytics
+
+* Fleet Health Monitoring
+* Healthiest Battery Detection
+* Riskiest Battery Detection
+* Fleet Status Evaluation
+
+### Data Drift Detection
+
+* SOH Drift Monitoring
+* Fleet Stability Analysis
+* Monitoring Dashboard
+
+### Gemma-Powered Tool Calling Agent
+
+The system includes a tool-calling EV assistant powered by Gemma.
+
+Examples:
+
+* Compare B0005 and B0047
+* Which battery is the riskiest?
+* Which battery is the healthiest?
+* Why is B0047 riskier than B0005?
+
+The agent automatically selects the appropriate analytical tool and converts the tool output into a professional EV engineering explanation.
+
+### MCP Server Tools
+
+Implemented MCP-compatible tools:
+
+* `predict_future_soh()`
+* `estimate_rul()`
+
+The project includes MCP server infrastructure and tool-based EV analytics services.
+
+---
+
+## 🏗 Architecture
 
 ```text
 User
  │
  ▼
-Streamlit Dashboard
+Gemma Tool-Calling Agent
  │
  ▼
-EV Digital Twin Agent
+EV Digital Twin Engine
  │
- ├── Battery Twin Engine
+ ├── Battery Twin
  ├── Charging Intelligence
  ├── Driving Intelligence
  ├── Predictive Maintenance
  ├── Fleet Monitoring
  ├── Drift Detection
  └── MCP Server Tools
+ │
+ ▼
+Streamlit Dashboard
 ```
 
-## Datasets
+---
+
+## 📊 Datasets
 
 ### NASA Battery Dataset
 
-Used for battery degradation modeling and SOH prediction.
+Used for:
+
+* Battery degradation modeling
+* SOH prediction
+* RUL estimation
 
 ### EV Charging Patterns Dataset
 
-Used for charging risk analysis and charging intelligence.
+Used for:
+
+* Charging behavior analysis
+* Charging risk assessment
 
 ### EV Telemetry Dataset
 
-Used for driving behavior and energy consumption analytics.
+Used for:
 
-## MCP Tools
+* Driving intelligence
+* Energy consumption analytics
+* Vehicle efficiency evaluation
 
-- `predict_future_soh()`
-- `estimate_rul()`
+---
 
-## Dashboard Modules
+## 🛠 Technologies
 
-* Battery Twin
-* Fleet Analytics
-* Charging Intelligence
-* Driving Intelligence
-* Predictive Maintenance
-* Monitoring
-* Drift Detection
-* AI Assistant
+* Python
+* Streamlit
+* Scikit-Learn
+* Pandas
+* Plotly
+* Ollama
+* Gemma 3
+* MCP (Model Context Protocol)
+* Machine Learning
+
+---
 
 ## Installation
 
@@ -93,16 +164,37 @@ cd mcp-ev-digital-twin-agent
 pip install -r requirements.txt
 ```
 
+---
+
 ## Run Dashboard
 
 ```bash
 streamlit run dashboard/app.py
 ```
 
-## Future Work
+---
 
-* Full MCP Tool-Calling Agent
-* Multi-Battery Comparison Tools
-* Hugging Face Deployment
+## 🔮 Future Work
+
+* Full MCP Client-Server Tool Orchestration
 * Advanced Fleet AI Analyst
+* Hugging Face Deployment
+* Real-Time Vehicle Telemetry Integration
+* Multi-Agent EV Diagnostics
 
+---
+
+## 👨‍💻 Author
+
+Mahmut Can Boran
+
+Computer Engineer | AI Engineer |
+
+Areas of Interest:
+
+* Automotive AI
+* Digital Twins
+* Agentic Systems
+* Predictive Maintenance
+* EV Software
+* MCP Architectures
