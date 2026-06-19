@@ -119,7 +119,36 @@ with tab1:
         """,
         unsafe_allow_html=True
     )
+    st.subheader("📈 Digital Twin Timeline")
 
+    timeline = twin.generate_timeline(
+        battery_id=battery_id,
+        start_cycle=0,
+        end_cycle=200,
+        step=50,
+        ambient_temperature=temperature,
+        nominal_range_km=nominal_range
+    )
+
+    timeline_df = pd.DataFrame(timeline)
+
+    fig_timeline = px.line(
+        timeline_df,
+        x="cycle",
+        y="predicted_soh",
+        markers=True,
+        title=f"{battery_id} Health Evolution",
+        labels={
+            "cycle": "Cycle",
+            "predicted_soh": "SOH (%)"
+        }
+    )
+
+    st.plotly_chart(
+        fig_timeline,
+        use_container_width=True,
+        key="battery_timeline"
+    )
     st.subheader("Future SOH Simulation")
 
     future = twin.simulate_future(

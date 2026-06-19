@@ -88,7 +88,38 @@ class BatteryDigitalTwin:
             })
 
         return results
+    def generate_timeline(
+        self,
+        battery_id: str,
+        start_cycle: int = 0,
+        end_cycle: int = 200,
+        step: int = 50,
+        ambient_temperature: int = 24,
+        nominal_range_km: float = 500
+    ) -> list:
+        timeline = []
 
+        for c in range(start_cycle, end_cycle + 1, step):
+            soh = self.predict_soh(
+                battery_id=battery_id,
+                cycle=c,
+                ambient_temperature=ambient_temperature
+            )
+
+            estimated_range = self.estimate_range(
+                soh=soh,
+                nominal_range_km=nominal_range_km
+            )
+
+            timeline.append({
+                "battery_id": battery_id,
+                "cycle": c,
+                "predicted_soh": soh,
+                "estimated_range_km": estimated_range,
+                "health_status": self.get_health_status(soh)
+            })
+
+        return timeline
     def get_health_status(self, soh: float) -> str:
         if soh >= 90:
             return "Excellent"
