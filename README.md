@@ -57,6 +57,15 @@ The system allows users to analyze battery health, estimate remaining useful lif
 * Healthiest Battery Detection
 * Riskiest Battery Detection
 * Fleet Status Evaluation
+* Fleet Anomaly Detection (Isolation Forest)
+* Anomalous Battery Identification
+
+### Fleet Intelligence
+
+* Fleet-Wide Battery Comparison
+* Battery Outlier Detection
+* Fleet Stability Assessment
+* Data Drift Monitoring
 
 ### Data Drift Detection
 
