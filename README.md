@@ -81,12 +81,22 @@ The agent automatically selects the appropriate analytical tool and converts the
 
 Implemented MCP-compatible tools:
 
-* `predict_future_soh()`
+* `predict_soh()`
 * `estimate_rul()`
+* `generate_summary()`
+* `compare_batteries()`
+* `get_riskiest_battery()`
+* `get_healthiest_battery()`
+* `get_charging_summary()`
+* `get_driving_score()`
+* `check_system_health()`
+* `detect_soh_drift()`
+### Dockerized Deployment
 
-The project includes MCP server infrastructure and tool-based EV analytics services.
-
----
+* Docker Support
+* Containerized Streamlit Dashboard
+* One-Command Deployment via Docker Compose
+* Portable Development Environment
 
 ## 🏗 Architecture
 
@@ -151,6 +161,8 @@ Used for:
 * Gemma 3
 * MCP (Model Context Protocol)
 * Machine Learning
+* Docker
+* Docker Compose
 
 ---
 
@@ -165,7 +177,17 @@ pip install -r requirements.txt
 ```
 
 ---
+## Docker Deployment
 
+```bash
+docker compose up --build
+```
+
+The dashboard will be available at:
+
+```text
+http://localhost:8501
+```
 ## Run Dashboard
 
 ```bash
@@ -188,7 +210,7 @@ streamlit run dashboard/app.py
 
 Mahmut Can Boran
 
-Computer Engineer | AI Engineer |
+Computer Engineer | AI Engineer 
 
 Areas of Interest:
 
