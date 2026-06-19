@@ -1,5 +1,5 @@
 import re
-
+import os
 from agent.ev_agent import EVDigitalTwinAgent
 import requests
 
@@ -33,9 +33,13 @@ Answer in 3-5 sentences.
 Always include one final sentence starting with "Maintenance implication:".
 This sentence should explain what the result means for monitoring, inspection, or replacement priority.
 """
+        ollama_url = os.getenv(
+            "OLLAMA_URL",
+            "http://localhost:11434/api/generate"
+        )
 
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            ollama_url,
             json={
                 "model": "gemma3:4b",
                 "prompt": prompt,

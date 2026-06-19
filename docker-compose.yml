@@ -1,0 +1,9 @@
+services:
+  ev-digital-twin:
+    build: .
+    container_name: ev-digital-twin-dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OLLAMA_URL=http://host.docker.internal:11434/api/generate

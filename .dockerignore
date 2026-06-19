@@ -1,0 +1,9 @@
+cat > .dockerignore << 'EOF'
+venv/
+.git/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+data/cleaned_dataset/
+EOF

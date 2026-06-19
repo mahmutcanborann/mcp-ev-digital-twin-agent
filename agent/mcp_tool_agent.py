@@ -1,9 +1,9 @@
+import os
 import asyncio
 import re
 import requests
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-
 
 class MCPToolAgent:
     def __init__(self):
@@ -47,6 +47,7 @@ class MCPToolAgent:
     async def ask_async(
         self,
         question: str,
+        battery_id: str = "B0005",
         cycle: int = 150,
         ambient_temperature: int = 24,
         nominal_range_km: float = 500
@@ -74,19 +75,23 @@ class MCPToolAgent:
                 elif tool_name == "get_riskiest_battery":
                     result = await session.call_tool(
                         "get_riskiest_battery",
-                        arguments={}
+                        arguments={
+                            "battery_id": battery_id
+                        }
                     )
 
                 elif tool_name == "get_healthiest_battery":
                     result = await session.call_tool(
                         "get_healthiest_battery",
-                        arguments={}
+                        arguments={
+                            "battery_id": battery_id
+                        }
                     )
                 elif tool_name == "predict_soh":
                     result = await session.call_tool(
                         "predict_soh",
                         arguments={
-                            "battery_id": "B0005",
+                            "battery_id": battery_id,
                             "cycle": cycle,
                             "ambient_temperature": ambient_temperature
                         }
@@ -96,7 +101,7 @@ class MCPToolAgent:
                     result = await session.call_tool(
                         "estimate_rul",
                         arguments={
-                            "battery_id": "B0005",
+                            "battery_id": battery_id,
                             "current_cycle": cycle,
                             "threshold": 80,
                             "ambient_temperature": ambient_temperature
@@ -107,7 +112,7 @@ class MCPToolAgent:
                     result = await session.call_tool(
                         "generate_summary",
                         arguments={
-                            "battery_id": "B0005",
+                            "battery_id": battery_id,
                             "cycle": cycle,
                             "ambient_temperature": ambient_temperature,
                             "nominal_range_km": nominal_range_km
@@ -130,7 +135,7 @@ class MCPToolAgent:
                     result = await session.call_tool(
                         "check_system_health",
                         arguments={
-                            "battery_id": "B0005",
+                            "battery_id": battery_id,
                             "cycle": cycle,
                             "ambient_temperature": ambient_temperature,
                             "nominal_range_km": nominal_range_km
@@ -160,6 +165,7 @@ class MCPToolAgent:
         self,
         question: str,
         cycle: int = 150,
+        battery_id: str = "B0005",
         ambient_temperature: int = 24,
         nominal_range_km: float = 500
     ):
@@ -167,6 +173,7 @@ class MCPToolAgent:
             self.ask_async(
                 question=question,
                 cycle=cycle,
+                battery_id=battery_id,
                 ambient_temperature=ambient_temperature,
                 nominal_range_km=nominal_range_km
             )
@@ -194,10 +201,17 @@ Do not mention internal tool names or MCP details.
 Do not invent values.
 Use clean spacing and concise formatting.
 Answer in 3-5 sentences.
+Always include one final sentence starting with "Maintenance implication:".
+This sentence should explain what the result means for monitoring, inspection, or replacement priority.
 """
 
+        ollama_url = os.getenv(
+            "OLLAMA_URL",
+            "http://localhost:11434/api/generate"
+        )
+
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            ollama_url,
             json={
                 "model": "gemma3:4b",
                 "prompt": prompt,
