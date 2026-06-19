@@ -16,7 +16,7 @@ from src.monitoring_engine import MonitoringEngine
 from src.drift_detector import DataDriftDetector
 from agent.tool_calling_ev_agent import ToolCallingEVAgent
 from agent.mcp_tool_agent import MCPToolAgent
-
+from src.fleet_anomaly_detector import FleetAnomalyDetector
 st.set_page_config(
     page_title="EV Digital Twin Platform",
     page_icon="🔋",
@@ -33,7 +33,7 @@ monitoring_engine = MonitoringEngine()
 drift_detector = DataDriftDetector()
 tool_calling_agent = ToolCallingEVAgent()
 mcp_tool_agent = MCPToolAgent()
-
+fleet_anomaly_detector = FleetAnomalyDetector()
 
 st.sidebar.header("Input Parameters")
 
@@ -267,6 +267,25 @@ with tab2:
     st.bar_chart(
         temp_counts.set_index("temperature")
     )
+
+    st.divider()
+
+    st.subheader("🚨 Fleet Anomaly Detection")
+
+    anomalies_df = fleet_anomaly_detector.detect_anomalies()
+    most_anomalous = fleet_anomaly_detector.get_most_anomalous_battery()
+
+    if most_anomalous.get("status") == "No anomalies detected":
+        st.success("No fleet anomalies detected.")
+    else:
+        a1, a2, a3 = st.columns(3)
+        a1.metric("Most Anomalous Battery", most_anomalous["battery_id"])
+        a2.metric("SOH", f"{most_anomalous['SOH']}%")
+        a3.metric("Cycle", most_anomalous["cycle"])
+
+        st.warning(most_anomalous["reason"])
+
+        st.dataframe(anomalies_df)
 
 
 with tab3:
