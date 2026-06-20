@@ -17,6 +17,7 @@ from src.drift_detector import DataDriftDetector
 from agent.tool_calling_ev_agent import ToolCallingEVAgent
 from agent.mcp_tool_agent import MCPToolAgent
 from src.fleet_anomaly_detector import FleetAnomalyDetector
+from agent.discovery_mcp_agent import DiscoveryMCPAgent
 st.set_page_config(
     page_title="EV Digital Twin Platform",
     page_icon="🔋",
@@ -34,7 +35,7 @@ drift_detector = DataDriftDetector()
 tool_calling_agent = ToolCallingEVAgent()
 mcp_tool_agent = MCPToolAgent()
 fleet_anomaly_detector = FleetAnomalyDetector()
-
+discovery_mcp_agent = DiscoveryMCPAgent()
 st.sidebar.header("Input Parameters")
 
 battery_id = st.sidebar.selectbox(
@@ -503,7 +504,7 @@ with tab5:
     )
 
     if question:
-        answer = mcp_tool_agent.ask(
+        answer = discovery_mcp_agent.ask(
             question=question,
             battery_id=battery_id,
             cycle=cycle,
