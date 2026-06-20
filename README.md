@@ -176,19 +176,22 @@ The agent combines numerical battery predictions with engineering knowledge to e
 
 ## Battery Digital Twin
 
-![](a.png)
+![](images/a.png)
 
 ---
 
 ## Fleet Intelligence
 
-![](b.png)
+
+![](images/b.png)
+
+
 
 ---
 
 ## Agentic AI Assistant
 
-![](c.png)
+![](images/c.png)
 
 ---
 
