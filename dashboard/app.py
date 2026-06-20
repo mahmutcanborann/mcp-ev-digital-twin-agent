@@ -511,6 +511,11 @@ with tab5:
             ambient_temperature=temperature,
             nominal_range_km=nominal_range
         )
+        selected_tool = discovery_mcp_agent.last_selected_tool
+
+        st.caption(
+    f"🔧 Selected Tool: {selected_tool}"
+)
 
         st.info(answer)
 

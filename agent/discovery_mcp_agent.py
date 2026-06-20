@@ -13,6 +13,7 @@ class DiscoveryMCPAgent:
             command="python",
             args=["mcp_servers/battery_soh_server.py"]
         )
+        self.last_selected_tool = None
 
     def ask_gemma_for_tool(self, question: str, tools_text: str) -> dict:
         ollama_url = os.getenv(
@@ -106,6 +107,8 @@ Rules:
                 )
 
                 tool_name = selection["tool_name"]
+                self.last_selected_tool = tool_name
+
                 arguments = selection.get("arguments", {})
 
                 arguments = self.fill_missing_arguments(
