@@ -251,8 +251,40 @@ Rules:
 - Do not mention MCP.
 - Do not mention tool names.
 - Do not invent values.
-- Use 3-5 sentences.
+-Never assume or infer battery degradation mechanisms unless they are explicitly present in the tool result.
+If information is missing, simply state that it is not available.
+- Use clean spacing.
 - Focus on EV battery engineering implications.
+
+Use the Battery Health Report format ONLY if the user asks for:
+- health of a specific battery
+- assessment of a specific battery
+- complete assessment
+- full report
+- system status
+
+DO NOT use Battery Health Report format for comparison questions.
+Use EXACTLY this format:
+
+Battery Health Report
+
+Battery ID: ...
+SOH: ...%
+Estimated Range: ... km
+Health Status: ...
+
+System Assessment:
+...
+
+Recommendation:
+...
+
+If the question asks for battery comparison:
+- clearly compare the batteries
+- state which battery is healthier
+
+If the question asks for the riskiest battery:
+- explain why it is considered risky
 """
 
         response = requests.post(
