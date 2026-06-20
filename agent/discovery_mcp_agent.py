@@ -93,7 +93,50 @@ Rules:
                 await session.initialize()
 
                 tools_result = await session.list_tools()
+                if self.is_multi_step_question(question):
+                    results = {}
 
+                    summary_result = await session.call_tool(
+                        "generate_summary",
+                        arguments={
+                            "battery_id": battery_id,
+                            "cycle": cycle,
+                            "ambient_temperature": ambient_temperature,
+                            "nominal_range_km": nominal_range_km
+                        }
+                    )
+
+                    rul_result = await session.call_tool(
+                        "estimate_rul",
+                        arguments={
+                            "battery_id": battery_id,
+                            "current_cycle": cycle,
+                            "threshold": 80,
+                            "ambient_temperature": ambient_temperature
+                        }
+                    )
+
+                    health_result = await session.call_tool(
+                        "check_system_health",
+                        arguments={
+                            "battery_id": battery_id,
+                            "cycle": cycle,
+                            "ambient_temperature": ambient_temperature,
+                            "nominal_range_km": nominal_range_km
+                        }
+                    )
+
+                    results["summary"] = summary_result.content[0].text
+                    results["rul"] = rul_result.content[0].text
+                    results["system_health"] = health_result.content[0].text
+
+                    self.last_selected_tool = "multi_step_health_assessment"
+
+                    return self.explain_result_with_gemma(
+                        question=question,
+                        tool_name="multi_step_health_assessment",
+                        tool_result=str(results)
+                    )
                 tools_text = "\n".join(
                     [
                         f"- {tool.name}: {tool.inputSchema}"
@@ -243,3 +286,18 @@ Rules:
                 nominal_range_km=nominal_range_km
             )
         )
+    def is_multi_step_question(self, question: str) -> bool:
+        q = question.lower()
+
+        multi_step_keywords = [
+            "complete assessment",
+            "full assessment",
+            "full report",
+            "complete report",
+            "overall assessment",
+            "detailed report",
+            "comprehensive",
+            "overall health"
+        ]
+
+        return any(keyword in q for keyword in multi_step_keywords)
