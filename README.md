@@ -79,7 +79,6 @@ The agent combines numerical battery predictions with engineering knowledge to e
 - Streamlit Dashboard
 - Dockerized Deployment
 - Hugging Face Spaces
-- Git LFS Model Management
 
 ---
 
@@ -212,7 +211,6 @@ pytest tests/
 
 - Docker
 - Hugging Face Spaces
-- Git LFS
 
 ---
 
