@@ -14,9 +14,10 @@ model and evaluation. Task: predict total cycle life from the first 100 cycles.
 |---|---|
 | `cells.csv` | One row per cell: `cell_id` (e.g. `b1c0`), `batch` (1-3), `policy` (charging protocol), `cycle_life` (cycles to 80% of nominal capacity), `split` |
 | `summary.csv.gz` | One row per cell and cycle: `cycle`, `q_discharge`, `q_charge` (Ah), `ir` (internal resistance, Ohm), `t_max`, `t_avg`, `t_min` (°C), `charge_time` (min), `cell_id` |
+| `features.csv` | One row per cell: split, `cycle_life` and the 20 early-cycle features (paper Table 1), built by `evaluation/build_cycle_life_features.py`; see `src/cycle_life_features.py` |
 | `qdlin_first100.npz` | One array per `cell_id`, shape (101, 1000): discharge capacity Qd(V) interpolated on a fixed 1000-point voltage grid. Row j is `cycles[j]`, matching the authors' indexing; batch 1 cycle 0 has no curve and is NaN |
 
-`cells.csv` and `summary.csv.gz` are in git. `qdlin_first100.npz` (~42 MB) is
+`cells.csv`, `summary.csv.gz` and `features.csv` are in git. `qdlin_first100.npz` (~42 MB) is
 not; to regenerate it, download the three `.mat` files from
 https://data.matr.io/1/ into `data/severson/raw/` and run:
 
