@@ -150,17 +150,20 @@ with tab1:
         fig_validation.add_trace(go.Scatter(
             x=curve["cycle"], y=curve["measured_soh"],
             name="Measured SOH", mode="lines",
-            line=dict(color="#10b981", width=3)
+            line=dict(color="#10b981", width=3),
+            hovertemplate="%{y:.1f}%<extra></extra>"
         ))
         fig_validation.add_trace(go.Scatter(
             x=curve["cycle"], y=curve["measurement_model"],
             name=f"New model (MAE {mae_new:.1f})", mode="lines",
-            line=dict(color="#3b82f6", width=2)
+            line=dict(color="#3b82f6", width=2),
+            hovertemplate="%{y:.1f}%<extra></extra>"
         ))
         fig_validation.add_trace(go.Scatter(
             x=curve["cycle"], y=curve["baseline_model"],
             name=f"Original inputs (MAE {mae_baseline:.1f})", mode="lines",
-            line=dict(color="#9ca3af", width=2, dash="dash")
+            line=dict(color="#9ca3af", width=2, dash="dash"),
+            hovertemplate="%{y:.1f}%<extra></extra>"
         ))
         fig_validation.add_vline(
             x=shown_cycle, line_dash="dot", line_color="#6b7280",
@@ -168,17 +171,17 @@ with tab1:
         )
         fig_validation.add_hline(
             y=80, line_dash="dot", line_color="#ef4444",
-            annotation_text="80% end-of-life", annotation_position="bottom left"
+            annotation_text="80% end-of-life", annotation_position="top right"
         )
         fig_validation.update_layout(
-            title=f"{battery_id}: measured vs. estimated SOH over the battery's life",
             xaxis_title="Cycle",
             yaxis_title="SOH (%)",
             hovermode="x unified",
-            height=430,
-            margin=dict(t=60, b=20),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
+            height=440,
+            margin=dict(t=50, b=10, l=10, r=10),
+            legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="left", x=0)
         )
+        st.markdown(f"**{battery_id}: measured vs. estimated SOH over the battery's life**")
         st.plotly_chart(fig_validation, use_container_width=True, key="soh_validation_chart")
 
         fleet_text = ""
