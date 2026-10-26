@@ -55,6 +55,13 @@ def test_estimate_is_out_of_sample_and_close_for_a_reference_battery(estimator):
     assert r["absolute_error"] < 10
 
 
+def test_health_status_is_returned_with_twin_thresholds(estimator):
+    from src.soh_estimator import health_status
+    assert [health_status(s) for s in (95, 84, 75, 60)] == ["Excellent", "Good", "Moderate", "Degraded"]
+    r = estimator.estimate_for_battery_cycle("B0018", 60)
+    assert r["health_status"] == health_status(r["estimated_soh"])
+
+
 def test_unknown_battery_is_reported_not_crashed(estimator):
     r = estimator.estimate_for_battery_cycle("B9999", 10)
     assert "error" in r and "B0005" in r["available_batteries"]

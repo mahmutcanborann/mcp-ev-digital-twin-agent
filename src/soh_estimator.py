@@ -29,6 +29,17 @@ MIN_CYCLES_PER_BATTERY = 40
 VALIDATED_MAE_SOH_POINTS = 4.8
 
 
+def health_status(soh: float) -> str:
+    """Same thresholds as BatteryDigitalTwin.get_health_status."""
+    if soh >= 90:
+        return "Excellent"
+    if soh >= 80:
+        return "Good"
+    if soh >= 70:
+        return "Moderate"
+    return "Degraded"
+
+
 def make_model() -> HistGradientBoostingRegressor:
     return HistGradientBoostingRegressor(max_iter=300, learning_rate=0.05, random_state=42)
 
@@ -50,8 +61,10 @@ class SOHEstimator:
     def estimate_from_cycle(self, cycle: pd.DataFrame, ambient_temperature: float) -> dict:
         """Estimate SOH from a raw discharge cycle (NASA column format)."""
         feats = extract_discharge_features(cycle, ambient_temperature)
+        soh = self.estimate_from_features(feats)
         return {
-            "estimated_soh": self.estimate_from_features(feats),
+            "estimated_soh": soh,
+            "health_status": health_status(soh),
             "features": {k: round(v, 4) for k, v in feats.items()},
             "typical_error_soh_points": VALIDATED_MAE_SOH_POINTS,
         }
@@ -83,6 +96,7 @@ class SOHEstimator:
             "battery_id": battery_id,
             "cycle": int(nearest["cycle"]),
             "estimated_soh": round(estimate, 2),
+            "health_status": health_status(estimate),
             "measured_soh": round(measured, 2),
             "absolute_error": round(abs(estimate - measured), 2),
             "method": "first 5 minutes of the discharge curve; model trained without this battery",
