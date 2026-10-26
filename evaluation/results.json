@@ -1,0 +1,77 @@
+{
+  "dataset": {
+    "cycles": 2555,
+    "batteries": 34,
+    "long_batteries": 25,
+    "long_cycles": 2353
+  },
+  "notebook_random_split": {
+    "mae": 1.23,
+    "r2": 0.926
+  },
+  "lobo": {
+    "all_batteries": {
+      "Original project inputs (temperature + cycle)": {
+        "mae": 7.87,
+        "r2": 0.25
+      },
+      "Charge window 3.9-4.2 V + CV time": {
+        "mae": 7.38,
+        "r2": 0.299
+      },
+      "First 5 min of discharge (production model)": {
+        "mae": 7.65,
+        "r2": 0.184
+      },
+      "Charge + first 5 min of discharge": {
+        "mae": 6.61,
+        "r2": 0.438
+      }
+    },
+    "batteries_with_40plus_cycles": {
+      "Original project inputs (temperature + cycle)": {
+        "mae": 6.59,
+        "r2": 0.342
+      },
+      "Charge window 3.9-4.2 V + CV time": {
+        "mae": 6.16,
+        "r2": 0.393
+      },
+      "First 5 min of discharge (production model)": {
+        "mae": 4.78,
+        "r2": 0.694
+      },
+      "Charge + first 5 min of discharge": {
+        "mae": 5.28,
+        "r2": 0.59
+      }
+    }
+  },
+  "production_model_per_battery_mae": {
+    "B0042": 1.83,
+    "B0044": 2.13,
+    "B0030": 2.15,
+    "B0005": 2.36,
+    "B0043": 2.51,
+    "B0029": 2.72,
+    "B0018": 2.82,
+    "B0007": 3.39,
+    "B0034": 3.5,
+    "B0036": 3.69,
+    "B0032": 3.8,
+    "B0031": 3.96,
+    "B0047": 4.0,
+    "B0055": 4.59,
+    "B0048": 4.94,
+    "B0039": 5.09,
+    "B0040": 5.11,
+    "B0006": 5.46,
+    "B0038": 5.48,
+    "B0053": 5.93,
+    "B0046": 6.03,
+    "B0056": 7.22,
+    "B0033": 8.8,
+    "B0045": 9.3,
+    "B0054": 10.02
+  }
+}

@@ -117,7 +117,8 @@ The agent combines numerical battery predictions with engineering knowledge to e
 
 | Module | Status |
 |----------|:------:|
-| Battery SOH Prediction | ✅ |
+| Measurement-based SOH Estimation (validated on unseen batteries) | ✅ |
+| Battery SOH Prediction (per-battery curve, legacy) | ✅ |
 | Remaining Useful Life (RUL) | ✅ |
 | Driving Range Estimation | ✅ |
 | Battery Digital Twin | ✅ |
@@ -132,6 +133,49 @@ The agent combines numerical battery predictions with engineering knowledge to e
 | Battery Knowledge Base | ✅ |
 | Docker Deployment | ✅ |
 | Hugging Face Deployment | ✅ |
+
+---
+
+# 📏 Model Evaluation: does it work on a battery it has never seen?
+
+The first SOH model reached **R² 0.93** on a random train/test split. That number is misleading: cycles of the same battery end up in both train and test, and the model gets the battery ID as an input, so it mostly memorises each battery's curve. The honest test is **leave-one-battery-out (LOBO)**: train on all batteries except one, test on the held-out battery, repeat for every battery.
+
+Under LOBO, the original inputs (temperature + cycle number) only reach R² 0.34. A new model estimates SOH from **measurements in the first 5 minutes of a discharge** (terminal voltage at 60 s and 300 s, discharge current, start temperature). The full discharge time is deliberately *not* used: at constant current it equals the capacity, i.e. the label itself.
+
+NASA PCoE battery dataset, 25 batteries with ≥ 40 cycles (2,353 discharge cycles):
+
+| Evaluation | Inputs | MAE (SOH pts) | R² |
+|---|---|:---:|:---:|
+| Random 80/20 row split | battery ID, temperature, cycle | 1.23 | 0.926 |
+| **Leave-one-battery-out** | temperature + cycle (original model) | 6.59 | 0.342 |
+| **Leave-one-battery-out** | charge window 3.9–4.2 V + CV time | 6.16 | 0.393 |
+| **Leave-one-battery-out** | **first 5 min of discharge (new model)** | **4.78** | **0.694** |
+| **Leave-one-battery-out** | charge + first 5 min of discharge | 5.28 | 0.590 |
+
+- On the reference cells B0005 / B0018 the held-out error is **2.4 / 2.8 SOH points**; on the noisiest cells (B0045, B0054) it rises to 9–10 points.
+- Including the 9 short, noisy batteries (< 40 cycles), the discharge-only model does not beat the baseline (MAE 7.65 vs 7.87); combining charge and discharge features works best there (MAE 6.61, R² 0.44). Full tables: [`evaluation/results.md`](evaluation/results.md).
+- Charge features help less than expected, probably because charge protocols differ between NASA test groups.
+
+### MCP tools for the new model
+
+| Tool | What it does |
+|---|---|
+| `estimate_soh_for_battery_cycle(battery_id, cycle)` | Estimates SOH of a recorded test cycle with a model trained **without** that battery and returns the measured SOH next to it, so the error is visible. |
+| `estimate_soh_from_measurements(voltage_at_60s, voltage_at_300s, mean_discharge_current, start_temperature, ambient_temperature)` | Estimates SOH of any cell from five numbers, no battery ID needed. |
+
+Example: *"Give me a measurement-based SOH estimate for B0018 cycle 60"* → estimated 84.1 %, measured 85.2 %.
+
+### Reproduce
+
+```bash
+# 1. Download the Kaggle "NASA Battery Dataset" (cleaned_dataset) and copy
+#    metadata.csv -> data/metadata.csv and data/ -> data/data/   (~650 MB, git-ignored)
+python evaluation/build_dataset.py   # -> data/features/soh_dataset.csv (in git)
+python evaluation/evaluate_soh.py    # -> evaluation/results.md, results.json
+pytest tests/
+```
+
+`data/features/soh_dataset.csv` is committed, so steps 2–3 run without the raw data.
 
 ---
 
@@ -195,8 +239,25 @@ The agent combines numerical battery predictions with engineering knowledge to e
 
 ---
 
+# ⚠️ Known Limitations
+
+Being explicit about what the system does *not* do yet:
+
+- **Legacy `predict_soh` / `estimate_rul`** take a battery ID and cycle number as input. They reproduce the degradation curve of a battery the model has already seen and cannot handle a new battery. Use `estimate_soh_for_battery_cycle` / `estimate_soh_from_measurements` for measurement-based estimates.
+- **RUL** is still computed from the legacy curve model. Random Forests do not extrapolate beyond the cycles seen in training, so long-horizon RUL is unreliable. A forecasting model on top of the measurement-based SOH estimate is the next step.
+- **Fresh batteries are underestimated:** in the first ~10 cycles of a held-out battery, the measurement-based model reads SOH 5–10 points too low.
+- **What-if scenarios** use heuristic degradation rates (0.02 / 0.04 / 0.08 SOH-% per cycle), not values fitted from data.
+- **"Drift detection"** compares a single SOH value with the fleet mean (z-score style outlier check); it does not monitor distribution shift over time.
+- **Knowledge base** injects the whole markdown file when a keyword matches; there is no retrieval / ranking yet (RAG is on the roadmap).
+- **Data sources are not linked to one vehicle:** battery data (NASA lab cells), driving telemetry and charging sessions come from three independent public datasets.
+- The "fleet" is the 34 NASA test cells, not vehicles.
+
+---
+
 # 🔮 Roadmap
 
+- RUL forecasting on top of the measurement-based SOH estimate
+- Native LLM tool calling instead of rule-based tool selection
 - Multi-Agent EV Architecture
 - Vector Database Integration
 - Retrieval-Augmented Generation (RAG)
