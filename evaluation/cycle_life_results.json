@@ -1,0 +1,186 @@
+{
+  "dataset": {
+    "cells": 124,
+    "test": 43,
+    "train": 41,
+    "secondary_test": 40
+  },
+  "models": {
+    "Baseline: training mean": {
+      "train": {
+        "rmse": 327.2,
+        "pct": 29.6
+      },
+      "test": {
+        "rmse": 400.7,
+        "pct": 35.0
+      },
+      "test_no_outlier": {
+        "rmse": 398.8,
+        "pct": 28.2
+      },
+      "secondary_test": {
+        "rmse": 510.6,
+        "pct": 36.1
+      },
+      "all_test_no_outlier": {
+        "rmse": 456.8,
+        "pct": 32.0
+      }
+    },
+    "Variance model (paper features)": {
+      "train": {
+        "rmse": 104.3,
+        "pct": 14.2
+      },
+      "test": {
+        "rmse": 139.1,
+        "pct": 14.8
+      },
+      "test_no_outlier": {
+        "rmse": 139.5,
+        "pct": 13.2
+      },
+      "secondary_test": {
+        "rmse": 197.5,
+        "pct": 11.4
+      },
+      "all_test_no_outlier": {
+        "rmse": 170.3,
+        "pct": 12.3
+      }
+    },
+    "Discharge model (paper features)": {
+      "train": {
+        "rmse": 69.0,
+        "pct": 9.3
+      },
+      "test": {
+        "rmse": 94.6,
+        "pct": 13.2
+      },
+      "test_no_outlier": {
+        "rmse": 87.4,
+        "pct": 9.5
+      },
+      "secondary_test": {
+        "rmse": 168.5,
+        "pct": 10.0
+      },
+      "all_test_no_outlier": {
+        "rmse": 133.3,
+        "pct": 9.7
+      }
+    },
+    "Full model (paper features)": {
+      "train": {
+        "rmse": 65.1,
+        "pct": 7.4
+      },
+      "test": {
+        "rmse": 122.6,
+        "pct": 11.9
+      },
+      "test_no_outlier": {
+        "rmse": 120.7,
+        "pct": 9.2
+      },
+      "secondary_test": {
+        "rmse": 233.2,
+        "pct": 12.7
+      },
+      "all_test_no_outlier": {
+        "rmse": 184.3,
+        "pct": 10.9
+      }
+    },
+    "Elastic net, all 20 candidate features": {
+      "train": {
+        "rmse": 65.0,
+        "pct": 7.3
+      },
+      "test": {
+        "rmse": 124.8,
+        "pct": 12.1
+      },
+      "test_no_outlier": {
+        "rmse": 123.4,
+        "pct": 9.5
+      },
+      "secondary_test": {
+        "rmse": 223.8,
+        "pct": 12.4
+      },
+      "all_test_no_outlier": {
+        "rmse": 179.5,
+        "pct": 10.9
+      }
+    },
+    "Random forest, all 20 candidate features": {
+      "train": {
+        "rmse": 136.3,
+        "pct": 5.3
+      },
+      "test": {
+        "rmse": 202.4,
+        "pct": 15.7
+      },
+      "test_no_outlier": {
+        "rmse": 199.7,
+        "pct": 11.3
+      },
+      "secondary_test": {
+        "rmse": 251.4,
+        "pct": 12.5
+      },
+      "all_test_no_outlier": {
+        "rmse": 226.4,
+        "pct": 11.9
+      }
+    }
+  },
+  "paper": {
+    "variance": {
+      "rmse": {
+        "train": 103,
+        "test": 138,
+        "test_no_outlier": 138,
+        "secondary_test": 196
+      },
+      "pct": {
+        "train": 14.1,
+        "test": 14.7,
+        "test_no_outlier": 13.2,
+        "secondary_test": 11.4
+      }
+    },
+    "discharge": {
+      "rmse": {
+        "train": 76,
+        "test": 91,
+        "test_no_outlier": 86,
+        "secondary_test": 173
+      },
+      "pct": {
+        "train": 9.8,
+        "test": 13.0,
+        "test_no_outlier": 10.1,
+        "secondary_test": 8.6
+      }
+    },
+    "full": {
+      "rmse": {
+        "train": 51,
+        "test": 118,
+        "test_no_outlier": 100,
+        "secondary_test": 214
+      },
+      "pct": {
+        "train": 5.6,
+        "test": 14.1,
+        "test_no_outlier": 7.5,
+        "secondary_test": 10.7
+      }
+    }
+  }
+}

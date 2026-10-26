@@ -200,11 +200,33 @@ pytest tests/
 
 `data/features/soh_dataset.csv` is committed, so steps 2–3 run without the raw data.
 
-# 🧪 Early cycle life prediction (Severson et al. 2019) — in progress
+# 🧪 Early cycle life prediction (Severson et al. 2019)
 
-A second, separate experiment on the 124 LFP/graphite cells from Severson et al., *Nature Energy* 2019 ([data.matr.io/1](https://data.matr.io/1/)). The task is predicting a cell's **total cycle life from its first 100 cycles** (early cycle life prediction, not classic RUL). The paper reports 9.1% test error; we will compare honestly against it.
+A second, separate experiment on the 124 LFP/graphite cells (A123 APR18650M1A, fast charging) from Severson et al., *Nature Energy* 2019 ([data.matr.io/1](https://data.matr.io/1/)). The task is **early cycle life prediction**: predict a cell's total cycle life (cycles to 80% of nominal capacity, 148 to 2,237 here) from its **first 100 cycles**, before capacity fade is visible. This is not classic RUL.
 
-This dataset is **never merged with the NASA data** (different chemistry and test protocol); it gets its own model and its own evaluation. So far only the dataset build step exists: [`evaluation/build_severson_dataset.py`](evaluation/build_severson_dataset.py) → [`data/severson/processed/`](data/severson/processed/README.md).
+This dataset is **never merged with the NASA data**: different chemistry, test protocol, model and evaluation.
+
+**Method (follows the paper):** the 20 candidate features of the paper's Table 1, mainly the change in the discharge curve between cycle 10 and 100, ΔQ<sub>100-10</sub>(V) (log variance, minimum, skewness, kurtosis), plus capacity fade, charge time, temperature and internal resistance. Target log10(cycle life), elastic net tuned by repeated 4-fold CV on the training cells only. Same split as the paper: 41 train / 43 primary test / 40 secondary test (batch 3, collected after the paper's model development).
+
+Mean absolute percent error on cells the model never saw ([full results](evaluation/cycle_life_results.md)):
+
+| Model | Primary test (w/o outlier) | Secondary test | All 82 test cells | Paper |
+|---|---|---|---|---|
+| Baseline: training mean | 28.2% | 36.1% | 32.0% | - |
+| Variance model (1 feature) | 13.2% | 11.4% | 12.3% | 13.2% / 11.4% |
+| **Discharge model (6 features)** | **9.5%** | **10.0%** | **9.7%** | 10.1% / 8.6% |
+| Full model (9 features) | 9.2% | 12.7% | 10.9% | 7.5% / 10.7% (= 9.1% headline) |
+
+- The single-feature variance model reproduces the paper almost exactly (log var ΔQ vs. log cycle life: ρ = -0.93, as in the paper), which validates the data pipeline.
+- Best result: **9.7% error vs. the paper's 9.1%**, from the discharge model. Our full model is weaker than the paper's, most likely because the summary data has no in-cycle temperature series, so the "temperature integral" feature is only approximated, and the paper also dropped four cells with faulty temperature probes.
+- With 41 training cells, a random forest on all features (11.9%) does worse than the linear elastic net: a small-data problem where a simple, well-chosen feature beats model complexity.
+- The outlier (b2c1, 148 cycles) is reported both with and without, as in the paper.
+
+```bash
+python evaluation/build_severson_dataset.py --raw data/severson/raw --out data/severson/processed  # raw .mat files needed
+python evaluation/build_cycle_life_features.py   # -> data/severson/processed/features.csv (in git)
+python evaluation/evaluate_cycle_life.py         # -> evaluation/cycle_life_results.md / .json
+```
 
 ---
 
