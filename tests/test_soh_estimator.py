@@ -62,6 +62,18 @@ def test_health_status_is_returned_with_twin_thresholds(estimator):
     assert r["health_status"] == health_status(r["estimated_soh"])
 
 
+def test_validation_block_uses_exact_tool_numbers(estimator):
+    import json
+    from agent.discovery_mcp_agent import DiscoveryMCPAgent
+    r = estimator.estimate_for_battery_cycle("B0018", 60)
+    block = DiscoveryMCPAgent.format_validation(json.dumps(r))
+    assert f"Measured SOH: {r['measured_soh']}%" in block
+    assert f"Estimation Error: {r['absolute_error']} SOH points" in block
+    # other tools (no measured SOH) get no validation block
+    assert DiscoveryMCPAgent.format_validation(json.dumps({"predicted_soh": 80})) == ""
+    assert DiscoveryMCPAgent.format_validation("not json") == ""
+
+
 def test_unknown_battery_is_reported_not_crashed(estimator):
     r = estimator.estimate_for_battery_cycle("B9999", 10)
     assert "error" in r and "B0005" in r["available_batteries"]

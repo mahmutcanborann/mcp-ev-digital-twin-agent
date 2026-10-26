@@ -178,12 +178,39 @@ Rules:
                 )
 
                 tool_result = result.content[0].text
-               
-                return self.explain_result_with_gemma(
+
+                explanation = self.explain_result_with_gemma(
                     question=question,
                     tool_name=tool_name,
                     tool_result=tool_result
                 )
+
+                # Numbers are appended from the tool result, not written by the LLM,
+                # so they are always exactly what the model returned.
+                return explanation + self.format_validation(tool_result)
+
+    @staticmethod
+    def format_validation(tool_result: str) -> str:
+        """Validation block for out-of-sample SOH estimates (empty for other tools)."""
+        try:
+            data = json.loads(tool_result)
+        except (TypeError, ValueError):
+            return ""
+        if not isinstance(data, dict) or "measured_soh" not in data:
+            return ""
+
+        lines = [
+            "",
+            "",
+            "Validation (this battery was NOT used to train the model):",
+            f"Estimated SOH: {data['estimated_soh']}%",
+            f"Measured SOH: {data['measured_soh']}%",
+            f"Estimation Error: {data['absolute_error']} SOH points "
+            f"(typical error on unseen batteries: {data.get('typical_error_soh_points', 'n/a')})",
+        ]
+        if data.get("note"):
+            lines.append(f"Note: {data['note']}")
+        return "\n".join(lines)
 
     def fill_missing_arguments(
         self,
@@ -278,6 +305,7 @@ Rules:
 - Do not mention MCP.
 - Do not mention tool names.
 - Do not invent values.
+- Do not mention measured SOH, absolute error or typical error; a validation section is appended automatically.
 - Copy Health Status exactly from the tool result. If the tool result has no health status, write "Not available".
 - Give charging, temperature or maintenance advice from the knowledge context ONLY if the tool result shows SOH below 80% or an explicit risk or warning. Otherwise recommend only continued monitoring.
 -Never assume or infer battery degradation mechanisms unless they are explicitly present in the tool result.
