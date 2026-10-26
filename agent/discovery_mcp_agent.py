@@ -278,6 +278,8 @@ Rules:
 - Do not mention MCP.
 - Do not mention tool names.
 - Do not invent values.
+- Copy Health Status exactly from the tool result. If the tool result has no health status, write "Not available".
+- Give charging, temperature or maintenance advice from the knowledge context ONLY if the tool result shows SOH below 80% or an explicit risk or warning. Otherwise recommend only continued monitoring.
 -Never assume or infer battery degradation mechanisms unless they are explicitly present in the tool result.
 If information is missing, simply state that it is not available.
 - Use clean spacing.

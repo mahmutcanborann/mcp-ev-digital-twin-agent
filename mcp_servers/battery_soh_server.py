@@ -14,7 +14,7 @@ from agent.ev_agent import EVDigitalTwinAgent
 from agent.llm_ev_agent import LLMEVDigitalTwinAgent
 from src.monitoring_engine import MonitoringEngine
 from src.drift_detector import DataDriftDetector
-from src.soh_estimator import SOHEstimator
+from src.soh_estimator import SOHEstimator, VALIDATED_MAE_SOH_POINTS, health_status
 mcp = FastMCP("EVBatteryDigitalTwinServer")
 
 twin = BatteryDigitalTwin()
@@ -67,9 +67,11 @@ def estimate_soh_from_measurements(
         "dis_v_at_300s": voltage_at_300s,
         "dis_T_start": start_temperature,
     }
+    soh = soh_estimator.estimate_from_features(features)
     return {
-        "estimated_soh": soh_estimator.estimate_from_features(features),
-        "typical_error_soh_points": 4.8,
+        "estimated_soh": soh,
+        "health_status": health_status(soh),
+        "typical_error_soh_points": VALIDATED_MAE_SOH_POINTS,
         "method": "first 5 minutes of the discharge curve, leave-one-battery-out validated",
     }
 
