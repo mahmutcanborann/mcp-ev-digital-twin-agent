@@ -50,6 +50,7 @@ Rules:
 - If the question asks to compare batteries, use compare_batteries.
 - If the question asks for healthiest battery, use get_healthiest_battery.
 - If the question asks for riskiest or worst battery, use get_riskiest_battery.
+- If the question asks for a measurement-based, measured, validated or out-of-sample SOH estimate, or how accurate the SOH estimate is for a battery or cycle, use estimate_soh_for_battery_cycle.
 - If the question asks about SOH or battery health, use generate_summary.
 - If the question asks about RUL or remaining useful life, use estimate_rul.
 - If the question asks about charging, use get_charging_summary.
@@ -177,12 +178,39 @@ Rules:
                 )
 
                 tool_result = result.content[0].text
-               
-                return self.explain_result_with_gemma(
+
+                explanation = self.explain_result_with_gemma(
                     question=question,
                     tool_name=tool_name,
                     tool_result=tool_result
                 )
+
+                # Numbers are appended from the tool result, not written by the LLM,
+                # so they are always exactly what the model returned.
+                return explanation + self.format_validation(tool_result)
+
+    @staticmethod
+    def format_validation(tool_result: str) -> str:
+        """Validation block for out-of-sample SOH estimates (empty for other tools)."""
+        try:
+            data = json.loads(tool_result)
+        except (TypeError, ValueError):
+            return ""
+        if not isinstance(data, dict) or "measured_soh" not in data:
+            return ""
+
+        lines = [
+            "",
+            "",
+            "Validation (this battery was NOT used to train the model):",
+            f"Estimated SOH: {data['estimated_soh']}%",
+            f"Measured SOH: {data['measured_soh']}%",
+            f"Estimation Error: {data['absolute_error']} SOH points "
+            f"(typical error on unseen batteries: {data.get('typical_error_soh_points', 'n/a')})",
+        ]
+        if data.get("note"):
+            lines.append(f"Note: {data['note']}")
+        return "\n".join(lines)
 
     def fill_missing_arguments(
         self,
@@ -225,6 +253,14 @@ Rules:
             arguments.setdefault("cycle", cycle)
             arguments.setdefault("ambient_temperature", ambient_temperature)
             arguments.setdefault("nominal_range_km", nominal_range_km)
+
+        if tool_name == "estimate_soh_for_battery_cycle":
+            arguments.setdefault("battery_id", battery_id)
+            cycle_match = re.search(r"cycle\s*(\d+)", question.lower())
+            arguments.setdefault(
+                "cycle",
+                int(cycle_match.group(1)) if cycle_match else cycle
+            )
 
         if tool_name == "detect_soh_drift":
             arguments.setdefault("current_soh", 75.0)
@@ -269,6 +305,9 @@ Rules:
 - Do not mention MCP.
 - Do not mention tool names.
 - Do not invent values.
+- Do not mention measured SOH, absolute error or typical error; a validation section is appended automatically.
+- Copy Health Status exactly from the tool result. If the tool result has no health status, write "Not available".
+- Give charging, temperature or maintenance advice from the knowledge context ONLY if the tool result shows SOH below 80% or an explicit risk or warning. Otherwise recommend only continued monitoring.
 -Never assume or infer battery degradation mechanisms unless they are explicitly present in the tool result.
 If information is missing, simply state that it is not available.
 - Use clean spacing.

@@ -6,4 +6,5 @@ scikit-learn
 joblib
 plotly
 requests
-mcp
+mcp>=1.2,<2  # v1 API (FastMCP); mcp 2.x renamed it to MCPServer
+pytest
