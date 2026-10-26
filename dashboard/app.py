@@ -13,7 +13,7 @@ from src.battery_twin import BatteryDigitalTwin
 from src.driving_analyzer import DrivingAnalyzer
 from src.predictive_maintenance import PredictiveMaintenanceEngine
 from src.monitoring_engine import MonitoringEngine
-from src.drift_detector import DataDriftDetector
+from src.soh_deviation import FleetSOHDeviationChecker
 from src.fleet_anomaly_detector import FleetAnomalyDetector
 from agent.discovery_mcp_agent import DiscoveryMCPAgent
 from src.soh_estimator import SOHEstimator, VALIDATED_MAE_SOH_POINTS
@@ -29,7 +29,7 @@ twin = BatteryDigitalTwin()
 driving_analyzer = DrivingAnalyzer()
 maintenance_engine = PredictiveMaintenanceEngine()
 monitoring_engine = MonitoringEngine()
-drift_detector = DataDriftDetector()
+deviation_checker = FleetSOHDeviationChecker()
 fleet_anomaly_detector = FleetAnomalyDetector()
 discovery_mcp_agent = DiscoveryMCPAgent()
 
@@ -209,7 +209,12 @@ with tab1:
 
     col1.metric("Predicted SOH", f"{summary['predicted_soh']}%")
     col2.metric("Estimated Range", f"{summary['estimated_range_km']} km")
-    col3.metric("RUL to 80% SOH", f"{summary['remaining_cycles_until_80_soh']} cycles")
+    rul_display = {
+        "estimated": f"{summary['remaining_cycles_until_80_soh']} cycles",
+        "already_below_threshold": "Reached",
+        "not_projected": "Not projected",
+    }[summary["rul_status"]]
+    col3.metric("RUL to 80% SOH", rul_display, help=summary["rul_note"])
     col4.metric("Health Status", summary["health_status"])
 
     soh_value = float(summary["predicted_soh"])
@@ -302,6 +307,11 @@ with tab1:
     st.divider()
 
     st.header("🧪 What-if Scenario Simulator")
+    st.caption(
+        "⚠️ Scenario effects are **heuristic assumptions**, not calibrated from data: "
+        "extra degradation of 0.02 / 0.04 / 0.08 SOH-% per cycle for cold / hot / aggressive use, "
+        "on top of the curve model. Use this to explore sensitivity, not as a forecast."
+    )
 
     scenario_data = twin.simulate_what_if_scenarios(
         battery_id=battery_id,
@@ -488,9 +498,7 @@ with tab4:
 
     fleet_health = monitoring_engine.monitor_fleet()
 
-    drift_result = drift_detector.detect_soh_drift(
-        summary["predicted_soh"]
-    )
+    deviation = deviation_checker.check(summary["predicted_soh"])
 
     s1, s2, s3, s4 = st.columns(4)
 
@@ -499,14 +507,19 @@ with tab4:
     s3.metric("Fleet Avg SOH", f"{fleet_health['average_soh']}%")
     s4.metric("Critical Batteries", fleet_health["critical_batteries"])
 
-    st.subheader("📡 Data Drift Monitoring")
+    st.subheader("📏 SOH Deviation from Fleet")
+    st.caption(
+        "Compares the selected battery's SOH with the fleet mean (z-score). "
+        "This is an outlier check, not data-drift monitoring of input distributions."
+    )
 
-    dr1, dr2, dr3, dr4 = st.columns(4)
+    dv1, dv2, dv3, dv4 = st.columns(4)
 
-    dr1.metric("Reference Mean SOH", f"{drift_result['reference_mean_soh']}%")
-    dr2.metric("Current SOH", f"{drift_result['current_soh']}%")
-    dr3.metric("Drift Distance", drift_result["drift_distance"])
-    dr4.metric("Drift Status", drift_result["drift_status"])
+    dv1.metric("Fleet Mean SOH", f"{deviation['fleet_mean_soh']}%")
+    dv2.metric("Current SOH", f"{deviation['current_soh']}%")
+    dv3.metric("Deviation", f"{deviation['z_score']:+.2f} σ",
+               help=f"{deviation['deviation_soh_points']:+.2f} SOH points from the fleet mean")
+    dv4.metric("Status", deviation["status"])
 
     st.subheader("Fleet Health Overview")
 
@@ -636,10 +649,13 @@ with tab5:
             nominal_range_km=nominal_range
         )
         selected_tool = discovery_mcp_agent.last_selected_tool
+        selection_method = {
+            "llm": "chosen by the LLM",
+            "rule_based_fallback": "keyword fallback (LLM unavailable or invalid answer)",
+            "multi_step": "multi-step assessment",
+        }.get(discovery_mcp_agent.last_selection_method, "n/a")
 
-        st.caption(
-    f"🔧 Selected Tool: {selected_tool}"
-)
+        st.caption(f"🔧 Selected Tool: {selected_tool} · {selection_method}")
 
         st.info(answer)
 
