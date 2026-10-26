@@ -527,14 +527,12 @@ with tab4:
 
     c1.metric(
         "Worst Battery",
-        fleet_health["worst_battery"]["battery_id"],
-        f"{fleet_health['worst_battery']['soh']}%"
+        f"{fleet_health['worst_battery']['battery_id']} ({fleet_health['worst_battery']['soh']}%)"
     )
 
     c2.metric(
         "Best Battery",
-        fleet_health["best_battery"]["battery_id"],
-        f"{fleet_health['best_battery']['soh']}%"
+        f"{fleet_health['best_battery']['battery_id']} ({fleet_health['best_battery']['soh']}%)"
     )
 
     fleet_monitor_df = monitoring_engine.fleet_df
@@ -657,7 +655,8 @@ with tab5:
 
         st.caption(f"🔧 Selected Tool: {selected_tool} · {selection_method}")
 
-        st.info(answer)
+        # Markdown ignores single line breaks; keep the report's lines apart
+        st.info(answer.replace("\n", "  \n"))
 
     st.markdown("### Example Questions")
     st.write("• How healthy is my battery?")
