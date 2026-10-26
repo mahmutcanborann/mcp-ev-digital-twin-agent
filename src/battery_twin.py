@@ -51,6 +51,36 @@ class BatteryDigitalTwin:
 
         return -1
 
+    @staticmethod
+    def describe_rul(rul: int, threshold: float = 80, max_cycle: int = 500) -> dict:
+        """Make the raw RUL value unambiguous.
+
+        estimate_rul() returns 0 when SOH is already at/below the threshold and -1
+        when the threshold is not reached up to max_cycle. The curve model cannot
+        extrapolate beyond the cycles it was trained on, so -1 does not mean
+        "the battery will last forever".
+        """
+        if rul == 0:
+            return {
+                "remaining_cycles": 0,
+                "rul_status": "already_below_threshold",
+                "rul_note": f"SOH is already at or below {threshold:g}%; the end-of-life threshold has been reached.",
+            }
+        if rul < 0:
+            return {
+                "remaining_cycles": None,
+                "rul_status": "not_projected",
+                "rul_note": (
+                    f"The curve model does not project SOH reaching {threshold:g}% before cycle {max_cycle}. "
+                    "It cannot extrapolate beyond the cycles seen in training, so no RUL is given."
+                ),
+            }
+        return {
+            "remaining_cycles": int(rul),
+            "rul_status": "estimated",
+            "rul_note": f"About {int(rul)} cycles until SOH reaches {threshold:g}% (legacy curve model).",
+        }
+
     def estimate_range(
         self,
         soh: float,
@@ -156,6 +186,7 @@ class BatteryDigitalTwin:
         )
 
         status = self.get_health_status(soh)
+        rul_info = self.describe_rul(rul, threshold=80)
 
         return {
             "battery_id": battery_id,
@@ -164,6 +195,8 @@ class BatteryDigitalTwin:
             "predicted_soh": soh,
             "estimated_range_km": estimated_range,
             "remaining_cycles_until_80_soh": rul,
+            "rul_status": rul_info["rul_status"],
+            "rul_note": rul_info["rul_note"],
             "health_status": status
         }
 

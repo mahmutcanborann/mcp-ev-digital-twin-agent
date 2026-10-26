@@ -1,9 +1,23 @@
-cat > .dockerignore << 'EOF'
+# Python / environments
+.venv/
 venv/
-.git/
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
+.pytest_cache/
+
+# VCS / OS / editors
+.git/
+.github/
 .DS_Store
+.vscode/
+.ipynb_checkpoints/
+
+# Raw NASA data (~650 MB), only needed to rebuild data/features/soh_dataset.csv
+data/data/
+data/metadata.csv
 data/cleaned_dataset/
-EOF
+
+# Not needed to run the app
+notebooks/
+tests/
+images/

@@ -19,7 +19,7 @@ sys.path.insert(0, str(BASE_DIR))
 from src.battery_knowledge_base import BatteryKnowledgeBase  # noqa: E402
 from src.battery_twin import BatteryDigitalTwin  # noqa: E402
 from src.charging_analyzer import ChargingAnalyzer  # noqa: E402
-from src.drift_detector import DataDriftDetector  # noqa: E402
+from src.soh_deviation import FleetSOHDeviationChecker  # noqa: E402
 from src.driving_analyzer import DrivingAnalyzer  # noqa: E402
 from src.fleet_anomaly_detector import FleetAnomalyDetector  # noqa: E402
 from src.monitoring_engine import MonitoringEngine  # noqa: E402
@@ -45,6 +45,21 @@ def test_twin_summary_is_internally_consistent(twin):
     assert s["health_status"] == twin.get_health_status(s["predicted_soh"])
     assert s["estimated_range_km"] == pytest.approx(500 * s["predicted_soh"] / 100, abs=0.01)
     assert isinstance(s["remaining_cycles_until_80_soh"], int)
+
+
+def test_rul_status_explains_ambiguous_values(twin):
+    assert twin.describe_rul(0)["rul_status"] == "already_below_threshold"
+    not_projected = twin.describe_rul(-1)
+    assert not_projected["rul_status"] == "not_projected"
+    assert not_projected["remaining_cycles"] is None
+    assert twin.describe_rul(42)["remaining_cycles"] == 42
+
+
+def test_summary_marks_battery_already_below_80_percent(twin):
+    s = twin.generate_summary("B0005", cycle=160, ambient_temperature=24)
+    assert s["predicted_soh"] <= 80
+    assert s["rul_status"] == "already_below_threshold"
+    assert "already" in s["rul_note"]
 
 
 def test_twin_health_thresholds(twin):
@@ -82,13 +97,14 @@ def test_driving_score_and_style_are_consistent():
 
 
 # --------------------------------------------------------------------- fleet
-def test_drift_status_follows_standard_deviation_bands():
-    det = DataDriftDetector()
-    mean = det.reference_df["SOH"].mean()
-    std = det.reference_df["SOH"].std()
-    assert det.detect_soh_drift(mean)["drift_status"] == "Normal"
-    assert det.detect_soh_drift(mean + 1.5 * std)["drift_status"] == "Warning"
-    assert det.detect_soh_drift(mean + 3 * std)["drift_status"] == "Critical"
+def test_soh_deviation_follows_standard_deviation_bands():
+    checker = FleetSOHDeviationChecker()
+    mean, std = checker.reference_mean, checker.reference_std
+    assert checker.check(mean)["status"] == "Normal"
+    assert checker.check(mean + 1.5 * std)["status"] == "Warning"
+    low = checker.check(mean - 3 * std)
+    assert low["status"] == "Outlier"
+    assert low["z_score"] == pytest.approx(-3, abs=0.01)
 
 
 def test_fleet_anomalies_are_a_subset_of_the_fleet():
@@ -137,8 +153,9 @@ def test_mcp_server_exposes_expected_tools():
 
     tools = asyncio.run(list_tools())
     assert {"estimate_soh_for_battery_cycle", "estimate_soh_from_measurements",
-            "generate_summary", "compare_batteries", "check_system_health"} <= tools
-    assert not {"ask_ev_agent", "ask_llm_ev_agent"} & tools  # no agent-inside-a-tool
+            "generate_summary", "compare_batteries", "check_system_health",
+            "check_soh_deviation"} <= tools
+    assert not {"ask_ev_agent", "ask_llm_ev_agent", "detect_soh_drift"} & tools
 
 
 # ---------------------------------------------------------- agent (needs Ollama)

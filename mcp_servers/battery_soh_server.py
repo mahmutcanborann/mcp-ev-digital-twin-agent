@@ -12,7 +12,7 @@ from src.charging_analyzer import ChargingAnalyzer
 from src.driving_analyzer import DrivingAnalyzer
 from agent.ev_agent import EVDigitalTwinAgent
 from src.monitoring_engine import MonitoringEngine
-from src.drift_detector import DataDriftDetector
+from src.soh_deviation import FleetSOHDeviationChecker
 from src.soh_estimator import SOHEstimator, VALIDATED_MAE_SOH_POINTS, health_status
 mcp = FastMCP("EVBatteryDigitalTwinServer")
 
@@ -21,7 +21,7 @@ charging_analyzer = ChargingAnalyzer()
 driving_analyzer = DrivingAnalyzer()
 fleet_agent = EVDigitalTwinAgent()
 monitoring_engine = MonitoringEngine()
-drift_detector = DataDriftDetector()
+deviation_checker = FleetSOHDeviationChecker()
 soh_estimator = SOHEstimator()
 
 
@@ -91,13 +91,20 @@ def estimate_rul(
     current_cycle: int,
     threshold: float = 80,
     ambient_temperature: int = 24
-) -> int:
-    return twin.estimate_rul(
+) -> dict:
+    """Remaining cycles until SOH reaches the threshold (legacy curve model).
+
+    Returns the cycle count together with a status, because the raw number is
+    ambiguous: 0 means the battery is already at/below the threshold, and the
+    curve model cannot extrapolate beyond the cycles it was trained on.
+    """
+    rul = twin.estimate_rul(
         battery_id=battery_id,
         current_cycle=current_cycle,
         threshold=threshold,
         ambient_temperature=ambient_temperature
     )
+    return twin.describe_rul(rul, threshold=threshold)
 
 
 @mcp.tool()
@@ -123,6 +130,9 @@ def simulate_what_if_scenarios(
     ambient_temperature: int = 24,
     nominal_range_km: float = 500
 ) -> dict:
+    """What-if SOH/range projection. The scenario effects are HEURISTIC assumptions
+    (extra 0.02 / 0.04 / 0.08 SOH-% per cycle for cold / hot / aggressive use),
+    not values calibrated from data."""
     return twin.simulate_what_if_scenarios(
         battery_id=battery_id,
         start_cycle=start_cycle,
@@ -198,12 +208,12 @@ def check_system_health(
     )
 
 @mcp.tool()
-def detect_soh_drift(
+def check_soh_deviation(
     current_soh: float
 ) -> dict:
-    return drift_detector.detect_soh_drift(
-        current_soh=current_soh
-    )
+    """Compare one SOH value with the fleet mean/std (z-score outlier check).
+    This is not distribution drift monitoring."""
+    return deviation_checker.check(current_soh=current_soh)
 
 if __name__ == "__main__":
     mcp.run()

@@ -1,5 +1,6 @@
 # 🔋 MCP-Based EV Digital Twin Agent
 
+[![Tests](https://github.com/mahmutcanborann/mcp-ev-digital-twin-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/mahmutcanborann/mcp-ev-digital-twin-agent/actions/workflows/tests.yml)
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![MCP](https://img.shields.io/badge/MCP-Agent-green)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue)
@@ -45,7 +46,7 @@ Unlike a traditional dashboard, this project dynamically discovers available MCP
 - Fleet Health Ranking
 - Fleet Anomaly Detection (Isolation Forest)
 - Battery Outlier Identification
-- Data Drift Monitoring
+- SOH Deviation Check vs. Fleet (z-score)
 
 ---
 
@@ -56,6 +57,7 @@ Unlike a traditional dashboard, this project dynamically discovers available MCP
 - Automatic Tool Selection with Gemma
 - Multi-Step Reasoning
 - Fleet-aware Context Injection
+- Robust tool selection: retry, schema-checked arguments, keyword fallback when the LLM is unavailable
 - Engineering Report Generation
 - Intelligent Tool Orchestration
 
@@ -112,6 +114,28 @@ The agent combines numerical battery predictions with engineering knowledge to e
 
 ---
 
+# ▶️ Running
+
+**Local**
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run dashboard/app.py          # dashboard on http://localhost:8501
+ollama pull gemma3:4b                   # optional (Ollama running): LLM explanations in the Agent tab
+pytest tests/                           # tests (LLM test is skipped without Ollama)
+```
+
+**Docker**
+
+```bash
+docker compose up --build
+```
+
+Ollama is not part of the container; it is expected on the host (`OLLAMA_URL=http://host.docker.internal:11434/api/generate`). Without it the dashboard still works: the agent falls back to keyword-based tool selection and shows the raw tool result with a notice instead of an LLM explanation.
+
+---
+
 # 📊 Current Capabilities
 
 | Module | Status |
@@ -125,7 +149,7 @@ The agent combines numerical battery predictions with engineering knowledge to e
 | What-if Scenario Simulation | ✅ |
 | Fleet Analytics | ✅ |
 | Fleet Anomaly Detection | ✅ |
-| Data Drift Detection | ✅ |
+| SOH Deviation Check (fleet z-score) | ✅ |
 | MCP Tool Calling | ✅ |
 | Dynamic Tool Discovery | ✅ |
 | Multi-Step Reasoning | ✅ |
@@ -143,13 +167,13 @@ Under LOBO, the original inputs (temperature + cycle number) only reach R² 0.34
 
 NASA PCoE battery dataset, 25 batteries with ≥ 40 cycles (2,353 discharge cycles):
 
-| Evaluation | Inputs | MAE (SOH pts) | R² |
-|---|---|:---:|:---:|
-| Random 80/20 row split | battery ID, temperature, cycle | 1.23 | 0.926 |
-| **Leave-one-battery-out** | temperature + cycle (original model) | 6.59 | 0.342 |
-| **Leave-one-battery-out** | charge window 3.9–4.2 V + CV time | 6.16 | 0.393 |
-| **Leave-one-battery-out** | **first 5 min of discharge (new model)** | **4.78** | **0.694** |
-| **Leave-one-battery-out** | charge + first 5 min of discharge | 5.28 | 0.590 |
+| Evaluation | Inputs | MAE (SOH pts) | RMSE (SOH pts) | R² |
+|---|---|:---:|:---:|:---:|
+| Random 80/20 row split | battery ID, temperature, cycle | 1.23 | 3.83 | 0.926 |
+| **Leave-one-battery-out** | temperature + cycle (original model) | 6.59 | 9.70 | 0.342 |
+| **Leave-one-battery-out** | charge window 3.9–4.2 V + CV time | 6.16 | 9.31 | 0.393 |
+| **Leave-one-battery-out** | **first 5 min of discharge (new model)** | **4.78** | **6.61** | **0.694** |
+| **Leave-one-battery-out** | charge + first 5 min of discharge | 5.28 | 7.66 | 0.590 |
 
 - On the reference cells B0005 / B0018 the held-out error is **2.4 / 2.8 SOH points**; on the noisiest cells (B0045, B0054) it rises to 9–10 points.
 - Including the 9 short, noisy batteries (< 40 cycles), the discharge-only model does not beat the baseline (MAE 7.65 vs 7.87); combining charge and discharge features works best there (MAE 6.61, R² 0.44). Full tables: [`evaluation/results.md`](evaluation/results.md).
@@ -242,10 +266,10 @@ pytest tests/
 Being explicit about what the system does *not* do yet:
 
 - **Legacy `predict_soh` / `estimate_rul`** take a battery ID and cycle number as input. They reproduce the degradation curve of a battery the model has already seen and cannot handle a new battery. Use `estimate_soh_for_battery_cycle` / `estimate_soh_from_measurements` for measurement-based estimates.
-- **RUL** is still computed from the legacy curve model. Random Forests do not extrapolate beyond the cycles seen in training, so long-horizon RUL is unreliable. A forecasting model on top of the measurement-based SOH estimate is the next step.
+- **RUL** is still computed from the legacy curve model. Random Forests do not extrapolate beyond the cycles seen in training, so long-horizon RUL is unreliable. The dashboard and the `estimate_rul` tool therefore report a status (`estimated`, `already_below_threshold`, `not_projected`) instead of an ambiguous `0` / `-1`. A forecasting model on top of the measurement-based SOH estimate is the next step.
 - **Fresh batteries are underestimated:** in the first ~10 cycles of a held-out battery, the measurement-based model reads SOH 5–10 points too low.
-- **What-if scenarios** use heuristic degradation rates (0.02 / 0.04 / 0.08 SOH-% per cycle), not values fitted from data.
-- **"Drift detection"** compares a single SOH value with the fleet mean (z-score style outlier check); it does not monitor distribution shift over time.
+- **What-if scenarios** use heuristic degradation rates (0.02 / 0.04 / 0.08 SOH-% per cycle), not values fitted from data; the dashboard says so next to the charts.
+- **SOH deviation check, not drift detection:** `check_soh_deviation` compares one SOH value with the fleet mean (z-score outlier check). Real data-drift monitoring would compare input distributions between training and production data over time; with 34 lab cells and no production stream there is nothing meaningful to monitor yet.
 - **Knowledge base** injects the whole markdown file when a keyword matches; there is no retrieval / ranking yet (RAG is on the roadmap).
 - **Data sources are not linked to one vehicle:** battery data (NASA lab cells), driving telemetry and charging sessions come from three independent public datasets.
 - The "fleet" is the 34 NASA test cells, not vehicles.
