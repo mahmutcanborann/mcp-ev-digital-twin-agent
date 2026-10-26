@@ -11,7 +11,6 @@ from src.battery_twin import BatteryDigitalTwin
 from src.charging_analyzer import ChargingAnalyzer
 from src.driving_analyzer import DrivingAnalyzer
 from agent.ev_agent import EVDigitalTwinAgent
-from agent.llm_ev_agent import LLMEVDigitalTwinAgent
 from src.monitoring_engine import MonitoringEngine
 from src.drift_detector import DataDriftDetector
 from src.soh_estimator import SOHEstimator, VALIDATED_MAE_SOH_POINTS, health_status
@@ -20,9 +19,7 @@ mcp = FastMCP("EVBatteryDigitalTwinServer")
 twin = BatteryDigitalTwin()
 charging_analyzer = ChargingAnalyzer()
 driving_analyzer = DrivingAnalyzer()
-ev_agent = EVDigitalTwinAgent()
-llm_agent = LLMEVDigitalTwinAgent()
-base_ev_agent = EVDigitalTwinAgent()
+fleet_agent = EVDigitalTwinAgent()
 monitoring_engine = MonitoringEngine()
 drift_detector = DataDriftDetector()
 soh_estimator = SOHEstimator()
@@ -163,44 +160,13 @@ def get_driving_style() -> str:
     return driving_analyzer.get_driving_style()
 
 @mcp.tool()
-def ask_ev_agent(
-    question: str,
-    battery_id: str = "B0005",
-    cycle: int = 150,
-    ambient_temperature: int = 24,
-    nominal_range_km: float = 500
-) -> str:
-    return ev_agent.ask(
-        question=question,
-        battery_id=battery_id,
-        cycle=cycle,
-        ambient_temperature=ambient_temperature,
-        nominal_range_km=nominal_range_km
-    )
-
-@mcp.tool()
-def ask_llm_ev_agent(
-    question: str,
-    battery_id: str = "B0005",
-    cycle: int = 150,
-    ambient_temperature: int = 24,
-    nominal_range_km: float = 500
-) -> str:
-    return llm_agent.ask(
-        question=question,
-        battery_id=battery_id,
-        cycle=cycle,
-        ambient_temperature=ambient_temperature,
-        nominal_range_km=nominal_range_km
-    )
-@mcp.tool()
 def compare_batteries(
     question: str,
     cycle: int = 150,
     ambient_temperature: int = 24,
     nominal_range_km: float = 500
 ) -> str:
-    return base_ev_agent.compare_batteries(
+    return fleet_agent.compare_batteries(
         question=question,
         cycle=cycle,
         ambient_temperature=ambient_temperature,
@@ -210,12 +176,12 @@ def compare_batteries(
 
 @mcp.tool()
 def get_riskiest_battery() -> str:
-    return base_ev_agent.get_riskiest_battery()
+    return fleet_agent.get_riskiest_battery()
 
 
 @mcp.tool()
 def get_healthiest_battery() -> str:
-    return base_ev_agent.get_healthiest_battery()
+    return fleet_agent.get_healthiest_battery()
 
 @mcp.tool()
 def check_system_health(

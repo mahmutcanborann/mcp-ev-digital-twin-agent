@@ -12,11 +12,8 @@ sys.path.append(str(BASE_DIR))
 from src.battery_twin import BatteryDigitalTwin
 from src.driving_analyzer import DrivingAnalyzer
 from src.predictive_maintenance import PredictiveMaintenanceEngine
-from agent.llm_ev_agent import LLMEVDigitalTwinAgent
 from src.monitoring_engine import MonitoringEngine
 from src.drift_detector import DataDriftDetector
-from agent.tool_calling_ev_agent import ToolCallingEVAgent
-from agent.mcp_tool_agent import MCPToolAgent
 from src.fleet_anomaly_detector import FleetAnomalyDetector
 from agent.discovery_mcp_agent import DiscoveryMCPAgent
 from src.soh_estimator import SOHEstimator, VALIDATED_MAE_SOH_POINTS
@@ -31,11 +28,8 @@ st.title("🔋 MCP-Based EV Digital Twin Platform")
 twin = BatteryDigitalTwin()
 driving_analyzer = DrivingAnalyzer()
 maintenance_engine = PredictiveMaintenanceEngine()
-ev_agent = LLMEVDigitalTwinAgent()
 monitoring_engine = MonitoringEngine()
 drift_detector = DataDriftDetector()
-tool_calling_agent = ToolCallingEVAgent()
-mcp_tool_agent = MCPToolAgent()
 fleet_anomaly_detector = FleetAnomalyDetector()
 discovery_mcp_agent = DiscoveryMCPAgent()
 
