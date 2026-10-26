@@ -74,6 +74,17 @@ def test_validation_block_uses_exact_tool_numbers(estimator):
     assert DiscoveryMCPAgent.format_validation("not json") == ""
 
 
+def test_holdout_curve_matches_point_estimate_and_beats_baseline(estimator):
+    curve = estimator.holdout_curve("B0018")
+    point = estimator.estimate_for_battery_cycle("B0018", 60)
+    row = curve[curve.cycle == 60].iloc[0]
+    assert round(row.measurement_model, 2) == point["estimated_soh"]
+    assert round(row.measured_soh, 2) == point["measured_soh"]
+    err_new = (curve.measurement_model - curve.measured_soh).abs().mean()
+    err_old = (curve.baseline_model - curve.measured_soh).abs().mean()
+    assert err_new < err_old
+
+
 def test_unknown_battery_is_reported_not_crashed(estimator):
     r = estimator.estimate_for_battery_cycle("B9999", 10)
     assert "error" in r and "B0005" in r["available_batteries"]
