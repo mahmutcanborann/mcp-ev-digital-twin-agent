@@ -50,6 +50,7 @@ Rules:
 - If the question asks to compare batteries, use compare_batteries.
 - If the question asks for healthiest battery, use get_healthiest_battery.
 - If the question asks for riskiest or worst battery, use get_riskiest_battery.
+- If the question asks for a measurement-based, measured, validated or out-of-sample SOH estimate, or how accurate the SOH estimate is for a battery or cycle, use estimate_soh_for_battery_cycle.
 - If the question asks about SOH or battery health, use generate_summary.
 - If the question asks about RUL or remaining useful life, use estimate_rul.
 - If the question asks about charging, use get_charging_summary.
@@ -225,6 +226,14 @@ Rules:
             arguments.setdefault("cycle", cycle)
             arguments.setdefault("ambient_temperature", ambient_temperature)
             arguments.setdefault("nominal_range_km", nominal_range_km)
+
+        if tool_name == "estimate_soh_for_battery_cycle":
+            arguments.setdefault("battery_id", battery_id)
+            cycle_match = re.search(r"cycle\s*(\d+)", question.lower())
+            arguments.setdefault(
+                "cycle",
+                int(cycle_match.group(1)) if cycle_match else cycle
+            )
 
         if tool_name == "detect_soh_drift":
             arguments.setdefault("current_soh", 75.0)

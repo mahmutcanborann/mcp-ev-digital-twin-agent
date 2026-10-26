@@ -14,6 +14,7 @@ from agent.ev_agent import EVDigitalTwinAgent
 from agent.llm_ev_agent import LLMEVDigitalTwinAgent
 from src.monitoring_engine import MonitoringEngine
 from src.drift_detector import DataDriftDetector
+from src.soh_estimator import SOHEstimator
 mcp = FastMCP("EVBatteryDigitalTwinServer")
 
 twin = BatteryDigitalTwin()
@@ -24,6 +25,53 @@ llm_agent = LLMEVDigitalTwinAgent()
 base_ev_agent = EVDigitalTwinAgent()
 monitoring_engine = MonitoringEngine()
 drift_detector = DataDriftDetector()
+soh_estimator = SOHEstimator()
+
+
+@mcp.tool()
+def estimate_soh_for_battery_cycle(
+    battery_id: str,
+    cycle: int
+) -> dict:
+    """Estimate battery State of Health (SOH) from MEASUREMENTS: the first 5 minutes
+    of the recorded discharge curve of a NASA test cycle.
+
+    The model used here was trained WITHOUT this battery, so the estimate is
+    out-of-sample. The measured SOH is returned next to the estimate so the
+    error is visible. Prefer this tool when the user asks for a measurement-based
+    or validated SOH estimate, or how accurate the SOH estimate is.
+    """
+    return soh_estimator.estimate_for_battery_cycle(
+        battery_id=battery_id,
+        cycle=cycle
+    )
+
+
+@mcp.tool()
+def estimate_soh_from_measurements(
+    voltage_at_60s: float,
+    voltage_at_300s: float,
+    mean_discharge_current: float,
+    start_temperature: float,
+    ambient_temperature: float = 24
+) -> dict:
+    """Estimate SOH (%) of any battery cell from the first 5 minutes of a discharge:
+    terminal voltage at 60 s and 300 s (V), mean discharge current (A, positive),
+    cell temperature at the start (degC) and ambient temperature (degC).
+    Does not need a battery ID. Typical error: ~4.8 SOH points on unseen batteries.
+    """
+    features = {
+        "ambient_temperature": ambient_temperature,
+        "dis_i_mean": abs(mean_discharge_current),
+        "dis_v_at_60s": voltage_at_60s,
+        "dis_v_at_300s": voltage_at_300s,
+        "dis_T_start": start_temperature,
+    }
+    return {
+        "estimated_soh": soh_estimator.estimate_from_features(features),
+        "typical_error_soh_points": 4.8,
+        "method": "first 5 minutes of the discharge curve, leave-one-battery-out validated",
+    }
 
 @mcp.tool()
 def predict_soh(
