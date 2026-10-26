@@ -94,6 +94,14 @@ def test_valid_answer_on_retry_is_used():
     assert a.select_tool("anything", "", TOOLS) == ("estimate_rul", {}, "llm")
 
 
+def test_ask_never_raises_when_the_mcp_server_cannot_start():
+    a = DiscoveryMCPAgent(ollama_url=DEAD_OLLAMA)
+    a.server_params.args = ["-c", "import sys; sys.exit(1)"]   # server dies immediately
+    answer = a.ask("How healthy is B0005?")
+    assert answer.startswith("⚠️ The agent could not complete this request")
+    assert a.last_selected_tool is None
+
+
 def test_explanation_falls_back_to_raw_tool_result(agent):
     text = agent.explain_or_raw("How healthy is B0005?", "generate_summary", '{"predicted_soh": 81.2}')
     assert "not available" in text and '{"predicted_soh": 81.2}' in text

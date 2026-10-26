@@ -452,7 +452,14 @@ If the question asks for the riskiest battery:
             detail = exc
             while isinstance(detail, BaseExceptionGroup) and detail.exceptions:
                 detail = detail.exceptions[0]
-            return f"⚠️ The agent could not complete this request: {type(detail).__name__}: {detail}"
+            message = f"⚠️ The agent could not complete this request: {type(detail).__name__}: {detail}"
+            if "connection closed" in str(detail).lower():
+                message += (
+                    "\nThe MCP server stopped during start-up. Run "
+                    "`python mcp_servers/battery_soh_server.py` to see the error "
+                    "(a common cause is mcp 2.x; install requirements.txt, which pins mcp<2)."
+                )
+            return message
     def is_multi_step_question(self, question: str) -> bool:
         q = question.lower()
 
