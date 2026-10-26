@@ -5,22 +5,22 @@ Data: NASA PCoE battery dataset, 2555 discharge cycles from 34 batteries (25 bat
 
 ## Random split vs. unseen battery
 
-| Evaluation | Inputs | MAE (SOH pts) | R² |
-|---|---|---|---|
-| Random 80/20 row split (notebook) | battery ID, temperature, cycle | 1.23 | 0.926 |
-| Leave-one-battery-out | Original project inputs (temperature + cycle) | 6.59 | 0.342 |
-| Leave-one-battery-out | Charge window 3.9-4.2 V + CV time | 6.16 | 0.393 |
-| Leave-one-battery-out | First 5 min of discharge (production model) | 4.78 | 0.694 |
-| Leave-one-battery-out | Charge + first 5 min of discharge | 5.28 | 0.59 |
+| Evaluation | Inputs | MAE (SOH pts) | RMSE (SOH pts) | R² |
+|---|---|---|---|---|
+| Random 80/20 row split (notebook) | battery ID, temperature, cycle | 1.23 | 3.83 | 0.926 |
+| Leave-one-battery-out | Original project inputs (temperature + cycle) | 6.59 | 9.7 | 0.342 |
+| Leave-one-battery-out | Charge window 3.9-4.2 V + CV time | 6.16 | 9.31 | 0.393 |
+| Leave-one-battery-out | First 5 min of discharge (production model) | 4.78 | 6.61 | 0.694 |
+| Leave-one-battery-out | Charge + first 5 min of discharge | 5.28 | 7.66 | 0.59 |
 
 ## Leave-one-battery-out, all batteries (incl. short, noisy ones)
 
-| Inputs | MAE (SOH pts) | R² |
-|---|---|---|
-| Original project inputs (temperature + cycle) | 7.87 | 0.25 |
-| Charge window 3.9-4.2 V + CV time | 7.38 | 0.299 |
-| First 5 min of discharge (production model) | 7.65 | 0.184 |
-| Charge + first 5 min of discharge | 6.61 | 0.438 |
+| Inputs | MAE (SOH pts) | RMSE (SOH pts) | R² |
+|---|---|---|---|
+| Original project inputs (temperature + cycle) | 7.87 | 11.86 | 0.25 |
+| Charge window 3.9-4.2 V + CV time | 7.38 | 11.46 | 0.299 |
+| First 5 min of discharge (production model) | 7.65 | 12.37 | 0.184 |
+| Charge + first 5 min of discharge | 6.61 | 10.26 | 0.438 |
 
 ## Production model: error per held-out battery
 

@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GroupKFold, train_test_split
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -43,7 +43,11 @@ LOBO_SETS = {
 
 
 def metrics(y, p) -> dict:
-    return {"mae": round(float(mean_absolute_error(y, p)), 2), "r2": round(float(r2_score(y, p)), 3)}
+    return {
+        "mae": round(float(mean_absolute_error(y, p)), 2),
+        "rmse": round(float(np.sqrt(mean_squared_error(y, p))), 2),
+        "r2": round(float(r2_score(y, p)), 3),
+    }
 
 
 def lobo(data: pd.DataFrame, features: list[str]) -> np.ndarray:
@@ -100,17 +104,18 @@ def write_markdown(r: dict, per_battery: pd.Series) -> None:
         "",
         "## Random split vs. unseen battery",
         "",
-        "| Evaluation | Inputs | MAE (SOH pts) | R² |",
-        "|---|---|---|---|",
+        "| Evaluation | Inputs | MAE (SOH pts) | RMSE (SOH pts) | R² |",
+        "|---|---|---|---|---|",
         f"| Random 80/20 row split (notebook) | battery ID, temperature, cycle | "
-        f"{r['notebook_random_split']['mae']} | {r['notebook_random_split']['r2']} |",
+        f"{r['notebook_random_split']['mae']} | {r['notebook_random_split']['rmse']} | "
+        f"{r['notebook_random_split']['r2']} |",
     ]
     for name, m in r["lobo"]["batteries_with_40plus_cycles"].items():
-        lines.append(f"| Leave-one-battery-out | {name} | {m['mae']} | {m['r2']} |")
+        lines.append(f"| Leave-one-battery-out | {name} | {m['mae']} | {m['rmse']} | {m['r2']} |")
     lines += ["", "## Leave-one-battery-out, all batteries (incl. short, noisy ones)", "",
-              "| Inputs | MAE (SOH pts) | R² |", "|---|---|---|"]
+              "| Inputs | MAE (SOH pts) | RMSE (SOH pts) | R² |", "|---|---|---|---|"]
     for name, m in r["lobo"]["all_batteries"].items():
-        lines.append(f"| {name} | {m['mae']} | {m['r2']} |")
+        lines.append(f"| {name} | {m['mae']} | {m['rmse']} | {m['r2']} |")
     lines += ["", "## Production model: error per held-out battery", "",
               "| Battery | MAE (SOH pts) |", "|---|---|"]
     lines += [f"| {b} | {e} |" for b, e in per_battery.items()]
