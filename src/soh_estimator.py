@@ -76,6 +76,28 @@ class SOHEstimator:
             self._holdout_models[battery_id] = make_model().fit(train[self.features], train["SOH"])
         return self._holdout_models[battery_id]
 
+    def holdout_curve(self, battery_id: str) -> pd.DataFrame:
+        """Whole-life comparison for one battery, both models trained WITHOUT it.
+
+        Columns: cycle, measured_soh, measurement_model (first 5 min of discharge),
+        baseline_model (original project inputs: temperature + cycle).
+        """
+        battery_id = battery_id.upper()
+        rows = self.data[self.data["battery_id"] == battery_id].sort_values("cycle")
+        if rows.empty:
+            return pd.DataFrame(columns=["cycle", "measured_soh", "measurement_model", "baseline_model"])
+
+        train = self.data[self.data["battery_id"] != battery_id]
+        baseline_feats = ["ambient_temperature", "cycle"]
+        baseline = make_model().fit(train[baseline_feats], train["SOH"])
+
+        return pd.DataFrame({
+            "cycle": rows["cycle"].to_numpy(),
+            "measured_soh": rows["SOH"].to_numpy(),
+            "measurement_model": self._model_without(battery_id).predict(rows[self.features]),
+            "baseline_model": baseline.predict(rows[baseline_feats]),
+        })
+
     def estimate_for_battery_cycle(self, battery_id: str, cycle: int) -> dict:
         """Estimate SOH for a recorded NASA test cycle, with a model trained WITHOUT that battery.
 

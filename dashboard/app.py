@@ -1,3 +1,4 @@
+import json
 import streamlit as st
 import pandas as pd
 from pathlib import Path
@@ -18,6 +19,7 @@ from agent.tool_calling_ev_agent import ToolCallingEVAgent
 from agent.mcp_tool_agent import MCPToolAgent
 from src.fleet_anomaly_detector import FleetAnomalyDetector
 from agent.discovery_mcp_agent import DiscoveryMCPAgent
+from src.soh_estimator import SOHEstimator, VALIDATED_MAE_SOH_POINTS
 st.set_page_config(
     page_title="EV Digital Twin Platform",
     page_icon="🔋",
@@ -36,6 +38,21 @@ tool_calling_agent = ToolCallingEVAgent()
 mcp_tool_agent = MCPToolAgent()
 fleet_anomaly_detector = FleetAnomalyDetector()
 discovery_mcp_agent = DiscoveryMCPAgent()
+
+
+@st.cache_resource
+def load_soh_estimator():
+    return SOHEstimator()
+
+
+soh_estimator = load_soh_estimator()
+
+
+@st.cache_data(show_spinner="Training models without this battery...")
+def holdout_curve(selected_battery: str) -> pd.DataFrame:
+    return soh_estimator.holdout_curve(selected_battery)
+
+
 st.sidebar.header("Input Parameters")
 
 battery_id = st.sidebar.selectbox(
@@ -80,6 +97,116 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 with tab1:
     st.header("🔋 Battery Digital Twin")
+
+    # ---------------- measurement-based SOH, validated on an unseen battery ----------------
+    st.subheader("🎯 Measurement-based SOH · validated on an unseen battery")
+    st.caption(
+        "Both estimates below come from models trained **without** the selected battery, "
+        "i.e. what you would get on a brand-new cell. The new model only reads the first "
+        "5 minutes of the discharge curve (voltage, current, temperature)."
+    )
+
+    validation = soh_estimator.estimate_for_battery_cycle(battery_id, cycle)
+
+    if "error" in validation:
+        st.warning(validation["error"])
+    else:
+        curve = holdout_curve(battery_id)
+        shown_cycle = validation["cycle"]
+        point = curve.loc[curve["cycle"] == shown_cycle].iloc[0]
+
+        measured = validation["measured_soh"]
+        new_estimate = validation["estimated_soh"]
+        baseline_estimate = round(float(point["baseline_model"]), 2)
+
+        mae_new = (curve["measurement_model"] - curve["measured_soh"]).abs().mean()
+        mae_baseline = (curve["baseline_model"] - curve["measured_soh"]).abs().mean()
+
+        v1, v2, v3 = st.columns(3)
+        v1.metric(
+            f"Measured SOH · cycle {shown_cycle}",
+            f"{measured:.1f}%",
+            help="Capacity measured in the NASA test, relative to the battery's maximum capacity."
+        )
+        v2.metric(
+            "New model · first 5 min of discharge",
+            f"{new_estimate:.1f}%",
+            delta=f"{new_estimate - measured:+.1f} pts vs measured",
+            delta_color="off",
+            help=f"Typical error on unseen batteries: {VALIDATED_MAE_SOH_POINTS} SOH points."
+        )
+        v3.metric(
+            "Original inputs · temperature + cycle",
+            f"{baseline_estimate:.1f}%",
+            delta=f"{baseline_estimate - measured:+.1f} pts vs measured",
+            delta_color="off",
+            help="Inputs of the original model, without the battery ID (which a new battery would not have)."
+        )
+
+        if "note" in validation:
+            st.caption(f"ℹ️ {validation['note']}")
+
+        fig_validation = go.Figure()
+        fig_validation.add_trace(go.Scatter(
+            x=curve["cycle"], y=curve["measured_soh"],
+            name="Measured SOH", mode="lines",
+            line=dict(color="#10b981", width=3)
+        ))
+        fig_validation.add_trace(go.Scatter(
+            x=curve["cycle"], y=curve["measurement_model"],
+            name=f"New model (MAE {mae_new:.1f})", mode="lines",
+            line=dict(color="#3b82f6", width=2)
+        ))
+        fig_validation.add_trace(go.Scatter(
+            x=curve["cycle"], y=curve["baseline_model"],
+            name=f"Original inputs (MAE {mae_baseline:.1f})", mode="lines",
+            line=dict(color="#9ca3af", width=2, dash="dash")
+        ))
+        fig_validation.add_vline(
+            x=shown_cycle, line_dash="dot", line_color="#6b7280",
+            annotation_text=f"cycle {shown_cycle}", annotation_position="top"
+        )
+        fig_validation.add_hline(
+            y=80, line_dash="dot", line_color="#ef4444",
+            annotation_text="80% end-of-life", annotation_position="bottom left"
+        )
+        fig_validation.update_layout(
+            title=f"{battery_id}: measured vs. estimated SOH over the battery's life",
+            xaxis_title="Cycle",
+            yaxis_title="SOH (%)",
+            hovermode="x unified",
+            height=430,
+            margin=dict(t=60, b=20),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
+        )
+        st.plotly_chart(fig_validation, use_container_width=True, key="soh_validation_chart")
+
+        fleet_text = ""
+        results_path = BASE_DIR / "evaluation" / "results.json"
+        if results_path.exists():
+            results = json.loads(results_path.read_text())
+            fleet = results["lobo"]["batteries_with_40plus_cycles"]
+            fleet_new = fleet["First 5 min of discharge (production model)"]["mae"]
+            fleet_old = fleet["Original project inputs (temperature + cycle)"]["mae"]
+            n_batteries = results["dataset"]["long_batteries"]
+            fleet_text = (
+                f" Fleet-wide ({n_batteries} unseen batteries): **{fleet_new}** vs. **{fleet_old}**."
+            )
+
+        st.caption(
+            f"Across all {len(curve)} cycles of {battery_id}: new model MAE **{mae_new:.2f}** "
+            f"vs. original inputs **{mae_baseline:.2f}** SOH points.{fleet_text} "
+            f"Details: `evaluation/results.md`."
+        )
+
+    st.divider()
+
+    # ---------------- curve model (has seen this battery) ----------------
+    st.subheader("📉 Curve model · trained on this battery")
+    st.caption(
+        "Reproduces this battery's own degradation curve from battery ID + cycle number; "
+        "used for range, RUL and the simulations below."
+    )
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -521,6 +648,7 @@ with tab5:
 
     st.markdown("### Example Questions")
     st.write("• How healthy is my battery?")
+    st.write("• Give me a measurement-based SOH estimate for B0018 cycle 60")
     st.write("• What maintenance actions do you recommend?")
     st.write("• Compare B0005 and B0047")
     st.write("• Which battery is the riskiest?")
