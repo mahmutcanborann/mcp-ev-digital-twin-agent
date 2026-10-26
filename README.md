@@ -240,24 +240,27 @@ pytest tests/
 
 # 📸 Demo
 
-## Battery Digital Twin
+## Measurement-based SOH on an unseen battery
 
-![](images/a.png)
+![Measured vs. estimated SOH for B0005](images/a.png)
+
+Both models are trained without B0005. Over its 168 cycles the new model is off by 2.4 SOH points on average, the original inputs by 7.8.
 
 ---
 
-## Fleet Intelligence
+## Monitoring and SOH deviation
 
+![System monitoring and SOH deviation from the fleet](images/b.png)
 
-![](images/b.png)
-
-
+System and fleet status, the selected battery's deviation from the fleet mean (z-score) and the fleet SOH distribution.
 
 ---
 
 ## Agentic AI Assistant
 
-![](images/c.png)
+![Agent answering a measurement-based SOH question](images/c.png)
+
+The LLM picks the MCP tool; the validation block (estimated vs. measured SOH) is added from the tool result in code, so its numbers are exact.
 
 ---
 
