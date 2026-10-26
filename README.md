@@ -200,6 +200,12 @@ pytest tests/
 
 `data/features/soh_dataset.csv` is committed, so steps 2–3 run without the raw data.
 
+# 🧪 Early cycle life prediction (Severson et al. 2019) — in progress
+
+A second, separate experiment on the 124 LFP/graphite cells from Severson et al., *Nature Energy* 2019 ([data.matr.io/1](https://data.matr.io/1/)). The task is predicting a cell's **total cycle life from its first 100 cycles** (early cycle life prediction, not classic RUL). The paper reports 9.1% test error; we will compare honestly against it.
+
+This dataset is **never merged with the NASA data** (different chemistry and test protocol); it gets its own model and its own evaluation. So far only the dataset build step exists: [`evaluation/build_severson_dataset.py`](evaluation/build_severson_dataset.py) → [`data/severson/processed/`](data/severson/processed/README.md).
+
 ---
 
 # 🛠️ Tech Stack

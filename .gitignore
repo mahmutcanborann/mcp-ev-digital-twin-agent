@@ -10,3 +10,5 @@ data/cleaned_dataset/
 # raw NASA per-cycle measurements (~650 MB) - download from Kaggle, see README
 data/data/
 data/metadata.csv
+data/severson/raw/
+data/severson/processed/*.npz
